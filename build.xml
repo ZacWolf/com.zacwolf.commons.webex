@@ -1,0 +1,12 @@
+<project basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+	<property environment="env"/>
+	<target name="buildProject" description="Builds the individual project">
+		<artifact:pom id="mypom" file="pom.xml" />
+		<artifact:mvn pom="pom.xml" mavenHome="${env.M2_HOME}" fork="true">
+			<arg value="clean" />
+			<arg value="javadoc:jar" />
+			<arg value="install" />
+		</artifact:mvn>
+		<copy file="target/${mypom.artifactId}-${mypom.version}.jar" toFile="${workspace_loc}/wbxcon/WebContent/WEB-INF/lib/com.zacwolf.commons.webex.jar" overwrite="true" />
+	</target>
+</project>

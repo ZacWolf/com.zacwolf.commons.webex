@@ -73,7 +73,7 @@ final			WBXCONorg		org;
 	 * @throws WBXCONexception
 	 */
 	public Set<String> domainGetCMCUClusterSet() throws WBXCONexception{
-		return this.org.restapiDomainPullCMCUClusterSet();
+		return this.org.restapiDomainGetCMCUClusterSet();
 	}
 
 	/**
@@ -173,6 +173,13 @@ final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();
 		return baos.toString("utf-8");
 	}
 
+	public void accountSetCMCUClusterValue(final WBXCONuser.WBXCONUID wbxconuid, final String clustername) throws WBXCONexception{
+		if (clustername==null || clustername.equalsIgnoreCase("null"))
+			this.org.restapiAccountRemoveEXTchildNode(wbxconuid,"WBX/CUCM");
+		else
+			this.org.restapiAccountModify(wbxconuid,"<ext><WBX><CUCM><clusterName>"+clustername+"</clusterName></CUCM></WBX></ext>");
+	}
+
 	/**
 	 * Set the CMCU cluster value for a given user 
 	 * @param userName		The userName of the user
@@ -183,7 +190,16 @@ final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();
 		if (clustername==null || clustername.equalsIgnoreCase("null"))
 			this.org.restapiAccountRemoveEXTchildNode(this.org.restapiAccountGet(userName).getWBXUID(),"WBX/CUCM");
 		else
-			this.org.restapiAccountModify(userName,"<WBX><CUCM><clusterName>"+clustername+"</clusterName></CUCM></WBX>");
+			this.org.restapiAccountModify(userName,"<ext><WBX><CUCM><clusterName>"+clustername+"</clusterName></CUCM></WBX></ext>");
+	}
+
+	/**
+	 * Get the CMCU cluster value for a given user
+	 * @param userName The userName (with or without domain) of the user to retrieve the value for
+	 * @throws WBXCONexception
+	 */
+	public String accountGetCMCUClusterValue(final WBXCONuser.WBXCONUID wbxconuid) throws WBXCONexception{
+		return this.org.restapiAccountGet(wbxconuid).getWBX().getCUCM().getClusterName();
 	}
 
 	/**

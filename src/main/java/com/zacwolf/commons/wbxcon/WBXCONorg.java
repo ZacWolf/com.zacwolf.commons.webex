@@ -278,7 +278,6 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 		return this.cred;
 	}
 
-
 	/**
 	 * Authenticates with the wapiAUTHURL, to pull a token and a server name
 	 * which is then used to populate the wapiURL and generate a cred used 
@@ -437,7 +436,7 @@ final	StackTraceElement element	=	Thread.currentThread().getStackTrace()[level];
 	 * @return {@link java.util.Set} of CMCU cluster names
 	 * @throws WBXCONexception
 	 */
-	final Set<String> restapiDomainPullCMCUClusterSet() throws WBXCONexception{
+	final Set<String> restapiDomainGetCMCUClusterSet() throws WBXCONexception{
 final	Set<String>			clusters			=	new TreeSet<String>();
 final	List<NameValuePair>	params				=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("cmd","get"));
@@ -540,7 +539,7 @@ final	List<NameValuePair>	params		=	new ArrayList<NameValuePair>();
 																				?id+"@"+this.orgName
 																				:id)+
 																		"</value></eq>"));
-final	Document 			dom			=	executeQueued(params);
+final	Document 			dom			=	executeQueued(params);//documentPrettyPrint(dom,System.out);
 final	NodeList			count		=	dom.getElementsByTagName("count");
 		if (Integer.parseInt(count.item(0).getTextContent())<1)
 			throw new NullPointerException(getMethodName()+"(\""+id+"\"):[ERROR]:No WBX User record exists");
@@ -566,7 +565,7 @@ final	List<NameValuePair>	params		=	new ArrayList<NameValuePair>();
 																				?id+"@"+this.orgName
 																				:id)+
 																		"</value></eq>"));
-final	Document 			dom			=	executeQueued(params);
+final	Document 			dom			=	executeQueued(params);//documentPrettyPrint(dom,System.out);
 final	NodeList			count		=	dom.getElementsByTagName("count");
 		if (Integer.parseInt(count.item(0).getTextContent())<1)
 			throw new NullPointerException(getMethodName()+"(\""+id+"\"):[ERROR]:No WBX User record exists");
@@ -583,7 +582,7 @@ final	NodeList			count		=	dom.getElementsByTagName("count");
 	 * @throws WBXCONexception
 	 * @trhows NullPointerException
 	 */
-	final WBXCONuser restapiAccountGet(final String id) throws WBXCONexception, NullPointerException{
+	final WBXCONuser restapiAccountGet(final Object id) throws WBXCONexception, NullPointerException{
 		return WBXCONuser.unmarshallXML(restapiAccountGetAsDom(id));
 	}
 
@@ -594,7 +593,7 @@ final	NodeList			count		=	dom.getElementsByTagName("count");
 	 * @param xml The changes to the User object
 	 * @throws WBXCONexception
 	 */
-final void restapiAccountModify(final Object id, final String xml) throws WBXCONexception, NullPointerException{
+final void restapiAccountModify(final Object id, final String xml) throws WBXCONexception{
 final	List<NameValuePair>	params		=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("cmd","set"));
 							params.add(new BasicNameValuePair("type","user"));
@@ -605,10 +604,8 @@ final	List<NameValuePair>	params		=	new ArrayList<NameValuePair>();
 																		(!((String)id).contains("@"+this.orgName)
 																				?id+"@"+this.orgName
 																				:id)+
-																		"</value></eq>"));final	Document 			dom			=	executeQueued(params);
-final	NodeList			count		=	dom.getElementsByTagName("count");
-		if (Integer.parseInt(count.item(0).getTextContent())<1)
-			throw new NullPointerException(getMethodName()+"(\""+id+"\"):[ERROR]:No WBX User record exists");
+																		"</value></eq>"));
+							executeQueued(params);
 	}
 
 	/**
@@ -623,7 +620,7 @@ final	NodeList			count		=	dom.getElementsByTagName("count");
 			throw new WBXCONexception("Not a valid op value.  Must be: add or remove");
 final	WBXCONuser.WBXCONUID	realid;
 		if (id instanceof String)
-								realid	=	restapiAccountGet(((String)id)).getWBXUID();
+								realid	=	restapiAccountGet((id)).getWBXUID();
 		else					realid	=	(WBXCONuser.WBXCONUID) id;
 final	List<NameValuePair>		params		=	new ArrayList<NameValuePair>();
 								params.add(new BasicNameValuePair("cmd","execute"));
@@ -678,7 +675,7 @@ final	List<NameValuePair> params			=	new ArrayList<NameValuePair>();
 		Document 				dom;
 final	WBXCONuser.WBXCONUID	realid;
 		if (id instanceof String)
-								realid	=	restapiAccountGet(((String)id)).getWBXUID();
+								realid	=	restapiAccountGet((id)).getWBXUID();
 		else					realid	=	(WBXCONuser.WBXCONUID) id;
 final	Set<String>				groups		=	new HashSet<String>();
 final	List<NameValuePair>		params		=	new ArrayList<NameValuePair>();

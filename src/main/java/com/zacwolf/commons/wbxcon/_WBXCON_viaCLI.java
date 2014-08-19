@@ -33,13 +33,13 @@ final	private	static	List<String>	OPTS_ORDER	=	new ArrayList<String>();
 		OPTS_ORDER.add("p");
 		OPTS_ORDER.add("u");
 		OPTS_ORDER.add("ug");
-		OPTS_ORDER.add("us");
-		OPTS_ORDER.add("ul");
+		OPTS_ORDER.add("uc");
+		OPTS_ORDER.add("u2s");
+		OPTS_ORDER.add("u2l");
 		OPTS_ORDER.add("u2g");
-		OPTS_ORDER.add("gc");
-		OPTS_ORDER.add("sc");
-		
-		OPTS_ORDER.add("ap");
+		OPTS_ORDER.add("u2c");
+		OPTS_ORDER.add("u2p");
+		OPTS_ORDER.add("cg");
 		
 		OPTS_ORDER.add("r");
 		OPTS_ORDER.add("rx");
@@ -136,12 +136,12 @@ final	CommandLineParser 			parser				=	new BasicParser();
 													 .create("u2s")
 									);
 									options.addOption(
-										OptionBuilder.withLongOpt("userLocked")
+										OptionBuilder.withLongOpt("userToLocked")
 													 .withDescription("Set temporary lock status for account")
 													 .hasArgs(2)
 													 .withValueSeparator()
 													 .withArgName("userName=true/false")
-													 .create("ul")
+													 .create("u2l")
 									);
 									options.addOption(
 										OptionBuilder.withLongOpt("addToGroup")
@@ -153,28 +153,33 @@ final	CommandLineParser 			parser				=	new BasicParser();
 									);
 final	OptionGroup					clusterGroup	=	new OptionGroup();
 									clusterGroup.addOption(
-										OptionBuilder.withLongOpt("setCluser")
+										OptionBuilder.withLongOpt("getClusters")
+													 .withDescription("Get CUCM cluster names configured for domain" )
+													 .create("gc")
+									);
+									clusterGroup.addOption(
+										OptionBuilder.withLongOpt("userToCluster")
 													 .withDescription("Set CUCM cluster for user(s)")
 													 .hasArgs(2)
 													 .withValueSeparator()
 													 .withArgName("CECID=ClusterName")
-													 .create("sc")
+													 .create("u2c")
 									);
 									clusterGroup.addOption(
-										OptionBuilder.withLongOpt("getCluser")
+										OptionBuilder.withLongOpt("getUserCluster")
 													 .withDescription("Get CUCM clustername set for user")
 													 .hasArg()
 													 .withArgName("CECID")
-													 .create("gc")
+													 .create("uc")
 									);
 									options.addOptionGroup(clusterGroup);
 									options.addOption(
-										OptionBuilder.withLongOpt("assertPriv")
+										OptionBuilder.withLongOpt("userToPrivilege")
 													 .withDescription("Assert a special priviledge to a user")
 													 .hasArgs(2)
 													 .withValueSeparator()
 													 .withArgName("CECID=privilege")
-													 .create("ap")
+													 .create("u2p")
 									);
 									options.addOption(
 										OptionBuilder.withLongOpt("reportType")
@@ -215,7 +220,12 @@ final	boolean						verbose				=	cmd.hasOption('v');
 					System.out.println(factory.org.passwordrule.getRandomPassword());
 					if (verbose) System.out.println("==================================================================================\n");
 				} else {
-					
+					if (cmd.hasOption("gc")){
+						if (verbose) System.out.println("\nCLUSTERNAME FOR DOMAIN:===========================================================");
+						for (final String clustername:factory.domainGetCMCUClusterSet())
+						System.out.println(clustername);
+						if (verbose) System.out.println("==================================================================================\n");
+					}
 					if (cmd.hasOption("u")){
 						if (verbose) System.out.println("\nUSER:==========================================================================");
 						if (cmd.getOptionValue('u').contains("%"))
@@ -224,7 +234,6 @@ final	boolean						verbose				=	cmd.hasOption('v');
 							WBXCONorg.documentPrettyPrint(factory.accountGetAsRawDom(cmd.getOptionValue("u")), System.out);
 						if (verbose) System.out.println("==================================================================================\n");
 					}
-					
 					if (cmd.hasOption("ug")){
 final	String						uid					=	cmd.getOptionValue("ug");
 final	WBXCONuser.WBXCONUID		wbxconuid;
@@ -232,9 +241,20 @@ final	WBXCONuser.WBXCONUID		wbxconuid;
 									wbxconuid			=	factory.accountGet((uid)).getWBXUID();
 							else	wbxconuid			=	new WBXCONuser.WBXCONUID(uid);
 						if (verbose) System.out.println("\nGROUPS:===========================================================================");
-						if (verbose) System.out.println("For user:"+wbxconuid);
+						if (verbose) System.out.println("For user:"+uid+" wbxconuid:"+wbxconuid);
 						for (final String line:factory.accountGetGroups(wbxconuid))
 							System.out.println(line);
+						if (verbose) System.out.println("==================================================================================\n");
+					}
+					if (cmd.hasOption("uc")){
+final	String						uid					=	cmd.getOptionValue("uc");
+final	WBXCONuser.WBXCONUID		wbxconuid;
+							if (!uid.startsWith("U"))
+									wbxconuid			=	factory.accountGet((uid)).getWBXUID();
+							else	wbxconuid			=	new WBXCONuser.WBXCONUID(uid);
+						if (verbose) System.out.println("\nCUCM Clustername:=================================================================");
+						if (verbose) System.out.println("For user:"+uid+" wbxconuid:"+wbxconuid);
+						System.out.println(factory.accountGetCMCUClusterValue(wbxconuid));
 						if (verbose) System.out.println("==================================================================================\n");
 					}
 					if (cmd.hasOption("u2s")){
@@ -243,28 +263,59 @@ final	WBXCONuser.WBXCONUID		wbxconuid;
 							if (!((String)uid).startsWith("U"))
 									wbxconuid			=	factory.accountGet(((String)uid)).getWBXUID();
 							else	wbxconuid			=	new WBXCONuser.WBXCONUID((String)uid);
-final	boolean						active				=	((String)cmd.getOptionProperties("us").get(uid)).equalsIgnoreCase("true");
+final	boolean						active				=	((String)cmd.getOptionProperties("u2s").get(uid)).equalsIgnoreCase("true");
 							factory.accountChangeStatus(wbxconuid, active);
-							System.out.println("User:"+wbxconuid+" set:"+(active?"active":"deactivated"));
+							System.out.println("User:"+uid+" wbxconuid:"+wbxconuid+" set:"+(active?"active":"deactivated"));
 						}
 					}
-					
+					if (cmd.hasOption("u2l")){
+						for (Object uid: cmd.getOptionProperties("u2l").keySet()){
+final	WBXCONuser.WBXCONUID		wbxconuid;						
+							if (!((String)uid).startsWith("U"))
+									wbxconuid			=	factory.accountGet(((String)uid)).getWBXUID();
+							else	wbxconuid			=	new WBXCONuser.WBXCONUID((String)uid);
+final	boolean						locked				=	((String)cmd.getOptionProperties("u2l").get(uid)).equalsIgnoreCase("true");
+							factory.accountChangeLocked(wbxconuid, locked);
+							System.out.println("User:"+uid+" wbxconuid:"+wbxconuid+" set:"+(locked?"locked":"unlocked"));
+						}
+					}
 					if (cmd.hasOption("u2g")){
 						for (Object uid: cmd.getOptionProperties("u2g").keySet()){
 final	WBXCONuser.WBXCONUID		wbxconuid;						
 							if (!((String)uid).startsWith("U"))
 									wbxconuid			=	factory.accountGet(((String)uid)).getWBXUID();
 							else	wbxconuid			=	new WBXCONuser.WBXCONUID((String)uid);
-final	String						gid					=	(String)cmd.getOptionProperties("ug").get(uid);
+final	String						gid					=	(String)cmd.getOptionProperties("u2g").get(uid);
 final	WBXCONuser.WBXCONGROUPID	wbxcongroupid;
 							if (!gid.startsWith("G"))
 									wbxcongroupid		=	factory.groupGetIDforName(gid);
 							else	wbxcongroupid		=	new WBXCONuser.WBXCONGROUPID(gid);
 									factory.accountAddToGroup(wbxconuid, wbxcongroupid);
-							System.out.println("User:"+wbxconuid+" added to group:"+wbxcongroupid);
+							System.out.println("User:"+uid+" wbxconuid:"+wbxconuid+" added to group:"+wbxcongroupid);
 						}
 					}
-					
+					if (cmd.hasOption("u2c")){
+						for (Object uid: cmd.getOptionProperties("u2c").keySet()){
+final	WBXCONuser.WBXCONUID		wbxconuid;
+							if (!((String)uid).startsWith("U"))
+									wbxconuid			=	factory.accountGet(((String)uid)).getWBXUID();
+							else	wbxconuid			=	new WBXCONuser.WBXCONUID((String)uid);
+final	String						clustername			=	(String)cmd.getOptionProperties("u2c").get(uid);
+									factory.accountSetCMCUClusterValue(wbxconuid, clustername);
+							System.out.println("User:"+uid+" wbxconuid:"+wbxconuid+" set to CUCM clustername:"+clustername);
+						}
+					}
+					if (cmd.hasOption("u2p")){
+						for (Object uid: cmd.getOptionProperties("u2p").keySet()){
+final	WBXCONuser.WBXCONUID		wbxconuid;
+							if (!((String)uid).startsWith("U"))
+									wbxconuid			=	factory.accountGet(((String)uid)).getWBXUID();
+							else	wbxconuid			=	new WBXCONuser.WBXCONUID((String)uid);
+final	String						privilege			=	(String)cmd.getOptionProperties("u2p").get(uid);
+									factory.accountAssertSpecialPrivilege(wbxconuid, privilege, "add");
+							System.out.println("User:"+uid+" wbxconuid:"+wbxconuid+" added to privilege:"+privilege);
+						}
+					}
 					if (cmd.hasOption("r")){
 						if (!cmd.hasOption("rx"))
 							throw new ParseException ("Must specify the xml parameters for the report");
@@ -275,9 +326,7 @@ final	OutputStream				out;
 									out					=	new FileOutputStream(cmd.getOptionValue("rf"));
 							System.out.println("Report will be saved to file:"+cmd.getOptionValue("rf"));
 						} else		out					=	System.out;
-						try{
-							
-							factory.getReport(cmd.getOptionValue("r"),cmd.getOptionValue("rx"), out);
+						try{		factory.getReport(cmd.getOptionValue("r"),cmd.getOptionValue("rx"), out);
 						} finally {
 							out.flush();
 							out.close();

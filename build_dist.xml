@@ -1,0 +1,20 @@
+<project basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+	<property environment="env"/>
+	<target name="buildProject" description="Builds the individual project">
+		<artifact:pom id="mypom" file="pom.xml" />
+		<artifact:mvn pom="pom.xml" mavenHome="${env.M2_HOME}" fork="true">
+			<arg value="clean" />
+			<arg value="javadoc:jar" />
+			<arg value="package" />
+			<arg value="-P dist" />
+		</artifact:mvn>
+		<copy todir="dist" overwrite="true" >
+			<fileset dir="target">
+				<include name="**/${mypom.artifactId}-${mypom.version}*.*"/>
+			</fileset>
+		</copy>
+		<artifact:mvn pom="pom.xml" mavenHome="${env.M2_HOME}" fork="true">
+			<arg value="clean" />
+		</artifact:mvn>
+	</target>
+</project>

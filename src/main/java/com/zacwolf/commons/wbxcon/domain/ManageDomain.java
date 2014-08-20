@@ -30,21 +30,40 @@ import com.zacwolf.commons.wbxcon.exceptions.WBXCONexception;
 
 public abstract class ManageDomain {
 
-final	public		static	String			KEY_level		=	"level";
-final	public		static	String			KEY_wapiUSER	=	"wapiUSER";
-final	public		static	String			KEY_wapiPASS	=	"wapiPASS";
-final	public		static	String			KEY_wapiAUTHURL	=	"wapiAUTHURL";
+final	public		static		String			KEY_level		=	"level";
+final	public		static		String			KEY_wapiUSER	=	"wapiUSER";
+final	public		static		String			KEY_wapiPASS	=	"wapiPASS";
+final	public		static		String			KEY_wapiAUTHURL	=	"wapiAUTHURL";
+final	public		static		String			KEY_ldapURL		=	"ldapURL";
+final	public		static		String			KEY_ldapUSER	=	"ldapUSER";
+final	public		static		String			KEY_ldapPASS	=	"ldapPASS";
 
-final	public				String			DOMAIN;
-final	protected			Logger			LOGGER;
-final	protected			_WBXCONfactory	org;
+final	public		transient	String					DOMAIN;
+final	protected	transient	Logger					LOGGER;
+final	protected	transient	_WBXCONfactory			org;
+final	protected	transient	LDAPserverConnection	ldap;
 
 
-	public ManageDomain(final Level level, final String domain, final String wapiUSER, final String wapiPASS) throws WBXCONexception{
-		this(level,domain,wapiUSER,wapiPASS,null);
+	public ManageDomain(final Level level, 
+						final String domain, 
+						final String wapiUSER, 
+						final String wapiPASS,
+						final String ldapURL,
+						final String ldapUSER,
+						final String ldapPASS
+					) throws WBXCONexception{
+		this(level,domain,null,wapiUSER,wapiPASS,ldapURL,ldapUSER,ldapPASS);
 	}
 
-	public ManageDomain(final Level level, final String domain, final String wapiAUTHURL, final String wapiUSER, final String wapiPASS) throws WBXCONexception{
+	public ManageDomain(final Level level, 
+						final String domain, 
+						final String wapiAUTHURL, 
+						final String wapiUSER, 
+						final String wapiPASS,
+						final String ldapURL,
+						final String ldapUSER,
+						final String ldapPASS
+					) throws WBXCONexception{
 					this.DOMAIN			=	domain;
 					this.LOGGER			=	Logger.getLogger(DOMAIN);
 					this.LOGGER.setLevel(level);
@@ -55,6 +74,9 @@ final	Formatter	defaultFormatter	=	new DomainLoggingFormatter();
 					defaultHandler.setLevel(level);
 					this.LOGGER.addHandler(defaultHandler);
 					this.org			=	new _WBXCONfactory(DOMAIN,wapiAUTHURL, wapiUSER, wapiPASS);
+		if (ldapURL!=null)
+					this.ldap			=	new LDAPserverConnection(ldapURL,ldapUSER,ldapPASS);
+		else		this.ldap			=	null;
 	}
 
 	public abstract void manageUsers() throws WBXCONexception;

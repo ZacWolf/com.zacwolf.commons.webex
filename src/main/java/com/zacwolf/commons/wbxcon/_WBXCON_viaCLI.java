@@ -32,6 +32,7 @@ final	private	static	List<String>	OPTS_ORDER	=	new ArrayList<String>();
 		OPTS_ORDER.add("cred");
 		OPTS_ORDER.add("p");
 		OPTS_ORDER.add("u");
+		OPTS_ORDER.add("ucp");
 		OPTS_ORDER.add("ug");
 		OPTS_ORDER.add("uc");
 		OPTS_ORDER.add("u2s");
@@ -119,6 +120,13 @@ final	CommandLineParser 			parser				=	new BasicParser();
 													 .hasArg()
 													 .withArgName("userName")
 													 .create("u")
+									);
+									options.addOption(
+										OptionBuilder.withLongOpt("clearProfile")
+													 .withDescription("Clear the user's profile")
+													 .hasArg()
+													 .withArgName("userName")
+													 .create("ucp")
 									);
 									options.addOption(
 										OptionBuilder.withLongOpt("getUserGroups")
@@ -221,7 +229,7 @@ final	boolean						verbose				=	cmd.hasOption('v');
 					if (verbose) System.out.println("==================================================================================\n");
 				} else {
 					if (cmd.hasOption("gc")){
-						if (verbose) System.out.println("\nCLUSTERNAME FOR DOMAIN:===========================================================");
+						if (verbose) System.out.println("\nCLUSTERNAMES FOR DOMAIN:==========================================================");
 						for (final String clustername:factory.domainGetCMCUClusterSet())
 						System.out.println(clustername);
 						if (verbose) System.out.println("==================================================================================\n");
@@ -231,7 +239,12 @@ final	boolean						verbose				=	cmd.hasOption('v');
 						if (cmd.getOptionValue('u').contains("%"))
 							WBXCONorg.documentPrettyPrint(factory.org.restapiAccountQuery("userName", "<like><path>userName</path><value>"+cmd.getOptionValue('u')+"@"+cmd.getOptionValue("D")+"</value></like>", "/user/userName,ASC", "/wbxapi/return"),System.out);
 						else
-							WBXCONorg.documentPrettyPrint(factory.accountGetAsRawDom(cmd.getOptionValue("u")), System.out);
+							WBXCONorg.documentPrettyPrint(factory.accountGet(cmd.getOptionValue("u")).marshallXML(), System.out);
+						if (verbose) System.out.println("==================================================================================\n");
+					}
+					if (cmd.hasOption("ucp")){
+						if (verbose) System.out.println("\nUSER:==========================================================================");
+						WBXCONorg.documentPrettyPrint(factory.accountCleanProfile(factory.accountGet(cmd.getOptionValue("ucp"))).marshallXML(), System.out);
 						if (verbose) System.out.println("==================================================================================\n");
 					}
 					if (cmd.hasOption("ug")){

@@ -158,22 +158,7 @@ final	Element					user			=	doc.createElement("user");
 		if (this.isLocked!=null)
 			WBXCONorg.documentSetTextContentOfNode("isLocked",this.isLocked,user);
 		
-final	Element					_ext			=	doc.createElement("ext");
-final	Element					_wbx			=	doc.createElement("WBX");
-		if(this.ext.getWBX().getFirstName()!=null)
-			WBXCONorg.documentSetTextContentOfNode("firstName",this.ext.getWBX().getFirstName(),_wbx);
-		
-		if(this.ext.getWBX().getLastName()!=null)
-			WBXCONorg.documentSetTextContentOfNode("lastName",this.ext.getWBX().getLastName(),_wbx);
-		
-		if (this.ext.getWBX().getPROFILE()!=null)
-			_wbx.appendChild(this.ext.getWBX().getPROFILE().marshallXML(doc));
-		
-		if (this.getWBX().getCUCM()!=null)
-			_wbx.appendChild(this.ext.getWBX().getCUCM().marshalXML(doc));
-		
-		_ext.appendChild(_wbx);
-		user.appendChild(_ext);
+		user.appendChild(this.ext.marshalXML(doc));
 		doc.appendChild(user);
 		return doc;
 	}
@@ -234,7 +219,7 @@ final	NodeList			children	=	_addr.getChildNodes();
 				}
 			}
 		}
-		
+		//WBXCONorg.documentPrettyPrint(dom, System.out);
 final	NodeList			phones		=	dom.getElementsByTagName("phoneNumber");
 		if(phones !=null){
 			for(int p=0; p<phones.getLength(); p++){
@@ -243,7 +228,7 @@ final	Node				_phone			=	phones.item(p);
 	String				type		=	null;
 	String				number		=	null;
 	String				displaynum	=	null;
-	String				country		=	null;
+//	String				country		=	null;
 final	NodeList			children	=	_phone.getChildNodes();
 					if(children != null){
 						for(int pp=0;pp<children.getLength();pp++){
@@ -254,36 +239,39 @@ final	NodeList			children	=	_phone.getChildNodes();
 									number		=	children.item(pp).getTextContent();
 								else if (children.item(pp).getNodeName().equalsIgnoreCase("displayNumber"))
 									displaynum	=	children.item(pp).getTextContent();
-								else if (children.item(pp).getNodeName().equalsIgnoreCase("countryCode"))
-									country		=	children.item(pp).getTextContent();
+//								else if (children.item(pp).getNodeName().equalsIgnoreCase("countryCode"))
+//									country		=	children.item(pp).getTextContent();
 							}
 						}
 					}
-final	PhoneNumber			phone		=	new PhoneNumber(number, country);
+final	PhoneNumber			phone		=	new PhoneNumber(number, null);//CountryCode is not the same code used by libphonenumber
 							phone.setDisplayName(displaynum);
 							account.getWBX().getPROFILE().addPhone(type, phone);
 				}
 			}
 		}
 
-final	NodeList			emails		=	dom.getElementsByTagName("email");
-		if(emails != null){
-			for(int p=0; p<emails.getLength(); p++){
-final	Node				_email		=	emails.item(p);
+/* emails managed in the profile are now depreciated
+
+final	NodeList			emailNumbers	=	dom.getElementsByTagName("emailNumber");
+		if(emailNumbers != null){
+			for(int p=0; p<emailNumbers.getLength(); p++){
+final	Node				_email			=	emailNumbers.item(p);
 				if (_email.hasAttributes()){
-	String				type		=	null;
-	String				emailadd	=	null;
-final	NodeList			children	=	_email.getChildNodes();						
+	String				type				=	null;
+	String				emailadd			=	null;
+final	NodeList			children		=	_email.getChildNodes();						
 					for(int pp=0;pp<children.getLength();pp++){
 						if (children.item(pp).getNodeName() != null && children.item(pp).getNodeName().equalsIgnoreCase("emailType"))
-							type		=	children.item(pp).getTextContent();
+							type			=	children.item(pp).getTextContent();
 						else if (children.item(pp).getNodeName() != null && children.item(pp).getNodeName().equalsIgnoreCase("email"))
-							emailadd	=	children.item(pp).getTextContent();
+							emailadd		=	children.item(pp).getTextContent();
 					}
 					account.getWBX().getPROFILE().addEmail(type, emailadd);
 				}
 			}
-		}		
+		}	
+*/
 		return account;
 	}
 
@@ -325,9 +313,10 @@ final	NodeList			children	=	_email.getChildNodes();
 		}
 
 		return "\""+id+"\":"+
-				"{imgURL:\"\","+
+				"{"+
 				"displayName:\""+displayName+"\","+
-				"orgTitle:\""+ext.wbx.prof.jobTitle+"\","+
+				(this.isActive!=null?"isActive:\""+isActive+"\",":"")+
+				(this.isLocked!=null?"isLocked:\""+isLocked+"\",":"")+
 				"company:\""+ext.wbx.prof.companyName+"\","+
 				"department:\""+ext.wbx.prof.businessUnit+"\","+
 				"title:\""+ext.wbx.prof.jobTitle+"\","+
@@ -335,8 +324,8 @@ final	NodeList			children	=	_email.getChildNodes();
 				"phone:\""+phone+"\","+
 				"mobile:\""+mobile+"\","+
 				"fax:\""+fax+"\","+
-				"address:\""+address+"\","+
-				"website:\""+ext.wbx.prof.websiteurl+"\"}";
+				"address:\""+address+"\""+
+				"}";
 	}
 
 		/**
@@ -393,6 +382,13 @@ final	private static	long 	serialVersionUID	=	-7326365659380042024L;
 			public WBX getWBX(){
 				return this.wbx;
 			}
+			
+			public Element marshalXML(Document doc){
+final	Element	_ext		=	doc.createElement("ext");
+				if (this.wbx!=null)
+					_ext.appendChild(this.wbx.marshalXML(doc));
+				return _ext;
+			}
 
 			public class WBX implements Serializable{
 final	private	static	long 		serialVersionUID	=	3427661461960111679L;
@@ -434,6 +430,19 @@ final	private			String		lastName;
 					return this.cucm;
 				}
 
+				public Element marshalXML(Document doc){
+final	Element					_wbx			=	doc.createElement("WBX");				
+					if(this.firstName!=null)
+						WBXCONorg.documentSetTextContentOfNode("firstName",this.firstName,_wbx);
+					if(this.lastName!=null)
+						WBXCONorg.documentSetTextContentOfNode("lastName",this.lastName,_wbx);
+					if (this.prof!=null)
+						_wbx.appendChild(this.prof.marshallXML(doc));
+					if (this.cucm!=null)
+						_wbx.appendChild(this.cucm.marshalXML(doc));						
+					return _wbx;
+				}
+
 				public class PROFILE implements Serializable{
 final	private	static		long			serialVersionUID	=	-3730369640285193796L;
 final	private				String			businessUnit;
@@ -459,6 +468,7 @@ final	private				Set<EMAIL>		emails				=	new HashSet<EMAIL>();
 						this.phoneNumbers.add(new PHONE(type,phone));
 					}
 
+					@Deprecated
 					public void addEmail(final String type, final String email){
 						this.emails.add(new EMAIL(type,email));
 					}
@@ -467,6 +477,7 @@ final	private				Set<EMAIL>		emails				=	new HashSet<EMAIL>();
 						return this.addresses;
 					}
 
+					@Deprecated
 					public Set<EMAIL> getEmails(){
 						return this.emails;
 					}
@@ -490,7 +501,7 @@ final	private				Set<EMAIL>		emails				=	new HashSet<EMAIL>();
 					public String getCompanyName(){
 						return this.companyName;
 					}
-					
+
 					public Element marshallXML(final Document doc){
 final	Element					_profile		=	doc.createElement("profile");
 
@@ -519,13 +530,14 @@ final	Element					_phonenumbers	=	doc.createElement("phoneNumbers");
 								_phonenumbers.appendChild(_phone.marshallXML(doc));
 							_profile.appendChild(_phonenumbers);
 						}
+/*Emails stored in the profile are now deprecated
 						if (getEmails().size()>0){
 final	Element					_emails			=	doc.createElement("emails");
 							for (EXT.WBX.PROFILE.EMAIL _email:getEmails())
 								_emails.appendChild(_email.marshallXML(doc));
 							_profile.appendChild(_emails);
 						}
-						
+*/
 						return _profile;
 					}
 
@@ -578,7 +590,7 @@ final	private			String	country;
 						}
 						
 						public Element marshalXML(final Document doc){
-final	Element						_addressfind	=	doc.createElement("address");
+final	Element					_addressfind	=	doc.createElement("address");
 								_addressfind.setAttribute("find", "addressType");
 								WBXCONorg.documentSetTextContentOfNode("addressType",this.type,_addressfind);
 							if (this.getStreetLine1()!=null)
@@ -598,6 +610,7 @@ final	Element						_addressfind	=	doc.createElement("address");
 						}	
 					}
 					
+					@Deprecated
 					public class EMAIL implements Serializable{
 final	private static	long	serialVersionUID	=	6054935273695729150L;
 final	private			String	type;
@@ -693,27 +706,27 @@ final	Element			_cucm		=	doc.createElement("CUCM");
 	public static class PhoneNumber implements Serializable{
 final	private static long 	serialVersionUID	=	3307338077759977614L;
 final	private 		String	number;
-final	private 		String	regioncode;
-final	private			int		countrycode;
+		private 		String	regioncode			=	"";
+		private			int		countrycode			=	0;
 		private			String	displayName			=	"";
 		
 		public PhoneNumber(String num, String cc){
-			if (num!=null && num.length()>=7){//seems the default is a 2char blank field@
-							this.number			=	num.replaceAll( "[^\\d]", "" );	
-			} else {		this.number			=	"";
-			}
-final	PhoneNumberUtil	phoneUtil			=	PhoneNumberUtil.getInstance();
-			if (cc!=null && cc.matches("-?\\d+(\\.\\d+)?")){
-							this.regioncode		=	phoneUtil.getRegionCodeForCountryCode(Integer.parseInt(cc));
-							this.countrycode	=	Integer.parseInt(cc);
-			} else {		this.regioncode		=	cc==null?"":cc;
-				if (cc !=null && !cc.equals(""))
-							this.countrycode	=	phoneUtil.getCountryCodeForRegion(cc);
-				else		this.countrycode	=	0;
+//			if (num!=null && num.length()>=7){//seems the default is a 2char blank field@
+//							this.number			=	num.replaceAll( "[^\\d]", "" );	
+//			} else {		this.number			=	"";
+//			}
+							this.number			=	num;
+final	PhoneNumberUtil		phoneUtil			=	PhoneNumberUtil.getInstance();
+com.google.i18n.phonenumbers.Phonenumber.PhoneNumber number;
+			try {
+							number 				=	phoneUtil.parse(num, cc!=null?cc:null);
+							this.countrycode	=	number.getCountryCode();
+							this.regioncode		=	phoneUtil.getRegionCodeForCountryCode(this.countrycode);
+			} catch (NumberParseException e) {
 			}
 		}
 		
-		public String getRegioncode(){
+		public String getRegionCode(){
 			return this.regioncode;
 		}
 		

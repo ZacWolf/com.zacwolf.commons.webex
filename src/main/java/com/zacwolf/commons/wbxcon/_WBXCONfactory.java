@@ -295,7 +295,7 @@ final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();
 	 * @throws TransformerException 
 	 * @throws NullPointerException 
 	 */
-	public void accountSyncProfile(final WBXCONuser account,final boolean clearFirst) throws WBXCONexception, ParserConfigurationException, NullPointerException, TransformerException{
+	public WBXCONuser accountSyncProfile(final WBXCONuser account,final boolean clearFirst) throws WBXCONexception, NullPointerException, TransformerException, ParserConfigurationException{
 		if (clearFirst)
 			this.org.restapiAccountRemoveEXTchildNode(account.getWBXUID(),"WBX/profile");
 		
@@ -303,6 +303,17 @@ final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
 final	DocumentBuilder			parser 		=	factory.newDocumentBuilder();
 final	Document				doc			=	parser.newDocument();
 		this.org.restapiAccountModify(account.getWBXUID(),"<user><ext><WBX>"+WBXCONorg.documentToXMLstring(account.getWBX().getPROFILE().marshallXML(doc))+"</WBX></ext></user>");
+		return accountGet(account.userName);
+	}
+	
+	/**
+	 * @param account
+	 * @return
+	 * @throws WBXCONexception
+	 */
+	public WBXCONuser accountCleanProfile(final WBXCONuser account) throws WBXCONexception{
+			this.org.restapiAccountRemoveEXTchildNode(account.getWBXUID(),"WBX/profile");
+			return accountGet(account.userName);
 	}
 	
 	/**

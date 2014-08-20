@@ -340,12 +340,10 @@ final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 
 	final private void cleanCred(final List<NameValuePair> params) throws WBXCONexception{
 		for (NameValuePair pair:params){
-			if (pair.getName().equalsIgnoreCase("cred")){
+			if (pair.getName().equalsIgnoreCase("cred"))
 				params.remove(pair);
-				params.add(new BasicNameValuePair("cred",getDomainCredToken()));
-				break;
-			}
 		}
+		params.add(new BasicNameValuePair("cred",getDomainCredToken()));
 	}
 
 	/**

@@ -251,27 +251,24 @@ final	PhoneNumber			phone		=	new PhoneNumber(number, null);//CountryCode is not 
 			}
 		}
 
-/* emails managed in the profile are now depreciated
-
-final	NodeList			emailNumbers	=	dom.getElementsByTagName("emailNumber");
-		if(emailNumbers != null){
-			for(int p=0; p<emailNumbers.getLength(); p++){
-final	Node				_email			=	emailNumbers.item(p);
+final	NodeList			emails		=	dom.getElementsByTagName("email");
+		if(emails != null){
+			for(int p=0; p<emails.getLength(); p++){
+final	Node				_email		=	emails.item(p);
 				if (_email.hasAttributes()){
-	String				type				=	null;
-	String				emailadd			=	null;
-final	NodeList			children		=	_email.getChildNodes();						
+	String				type		=	null;
+	String				emailadd	=	null;
+final	NodeList			children	=	_email.getChildNodes();						
 					for(int pp=0;pp<children.getLength();pp++){
 						if (children.item(pp).getNodeName() != null && children.item(pp).getNodeName().equalsIgnoreCase("emailType"))
-							type			=	children.item(pp).getTextContent();
+							type		=	children.item(pp).getTextContent();
 						else if (children.item(pp).getNodeName() != null && children.item(pp).getNodeName().equalsIgnoreCase("email"))
-							emailadd		=	children.item(pp).getTextContent();
+							emailadd	=	children.item(pp).getTextContent();
 					}
 					account.getWBX().getPROFILE().addEmail(type, emailadd);
 				}
 			}
-		}	
-*/
+		}		
 		return account;
 	}
 
@@ -468,7 +465,6 @@ final	private				Set<EMAIL>		emails				=	new HashSet<EMAIL>();
 						this.phoneNumbers.add(new PHONE(type,phone));
 					}
 
-					@Deprecated
 					public void addEmail(final String type, final String email){
 						this.emails.add(new EMAIL(type,email));
 					}
@@ -477,7 +473,6 @@ final	private				Set<EMAIL>		emails				=	new HashSet<EMAIL>();
 						return this.addresses;
 					}
 
-					@Deprecated
 					public Set<EMAIL> getEmails(){
 						return this.emails;
 					}
@@ -530,14 +525,13 @@ final	Element					_phonenumbers	=	doc.createElement("phoneNumbers");
 								_phonenumbers.appendChild(_phone.marshallXML(doc));
 							_profile.appendChild(_phonenumbers);
 						}
-/*Emails stored in the profile are now deprecated
 						if (getEmails().size()>0){
 final	Element					_emails			=	doc.createElement("emails");
 							for (EXT.WBX.PROFILE.EMAIL _email:getEmails())
 								_emails.appendChild(_email.marshallXML(doc));
 							_profile.appendChild(_emails);
 						}
-*/
+						
 						return _profile;
 					}
 
@@ -610,7 +604,6 @@ final	Element					_addressfind	=	doc.createElement("address");
 						}	
 					}
 					
-					@Deprecated
 					public class EMAIL implements Serializable{
 final	private static	long	serialVersionUID	=	6054935273695729150L;
 final	private			String	type;
@@ -630,7 +623,7 @@ final	private			String	email;
 						}
 						
 						public Element marshallXML(final Document doc){
-final	Element					_emailfind		=	doc.createElement("emailNumber");
+final	Element					_emailfind		=	doc.createElement("email");
 							_emailfind.setAttribute("find", "emailType");
 							WBXCONorg.documentSetTextContentOfNode("emailType",this.type,_emailfind);
 							WBXCONorg.documentSetTextContentOfNode("email",this.email,_emailfind);

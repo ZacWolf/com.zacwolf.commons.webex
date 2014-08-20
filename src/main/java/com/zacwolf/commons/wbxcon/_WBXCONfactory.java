@@ -55,11 +55,29 @@ final			WBXCONorg		org;
 	public _WBXCONfactory(final String domainname, final String wapiUSER, final String wapiPASS) throws WBXCONexception{
 		this.domainname	=	domainname;
 		this.org		=	new WBXCONorg(domainname, wapiUSER, wapiPASS);
+		Runtime.getRuntime().addShutdownHook(new Thread("_WBXCONfactory shutdownhook") {
+			@Override
+			public void run() {
+				try { finalize();
+				} catch (Throwable e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	public _WBXCONfactory(final String domainname, final String wapiAUTHURL, final String wapiUSER, final String wapiPASS) throws WBXCONexception{
 		this.domainname	=	domainname;
 		this.org		=	new WBXCONorg(domainname, wapiAUTHURL, wapiUSER, wapiPASS);
+		Runtime.getRuntime().addShutdownHook(new Thread("_WBXCONfactory shutdownhook") {
+			@Override
+			public void run() {
+				try { finalize();
+				} catch (Throwable e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	@Override

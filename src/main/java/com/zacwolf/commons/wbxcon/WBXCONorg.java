@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.net.SocketException;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,7 +53,6 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -66,7 +66,6 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -75,7 +74,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -287,7 +285,7 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 	 * 
 	 * @throws WBXCONexception
 	 */
-	final private synchronized void restapiDomainGetCredToken (int retry) {
+	final private synchronized void restapiDomainGetCredToken (final int retry) {
 		Document				dom			=	null;
 final	List<NameValuePair>		params		=	new ArrayList<NameValuePair>();
 								params.add(new BasicNameValuePair("cmd","getwebextoken"));
@@ -330,12 +328,22 @@ final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 		} catch (Exception e){
 			if (retry<3){
 				//Retry generating a new cred three times before giving up
-				restapiDomainGetCredToken(++retry);
+				restapiDomainGetCredToken(retry+1);
 			} else {
 				this.wapiURL	=	null;
 				System.err.println(getMethodName()+"("+retry+") for "+this.orgName+" unable to generate CRED token.");
 				e.printStackTrace();
 				System.exit(3);
+			}
+		}
+	}
+
+	final private void cleanCred(final List<NameValuePair> params) throws WBXCONexception{
+		for (NameValuePair pair:params){
+			if (pair.getName().equalsIgnoreCase("cred")){
+				params.remove(pair);
+				params.add(new BasicNameValuePair("cred",getDomainCredToken()));
+				break;
 			}
 		}
 	}
@@ -348,9 +356,13 @@ final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 	 * @throws WBXCONexception
 	 */
 	@SuppressWarnings("unused")
-	final private Document executeNonQueued(List<NameValuePair> params) throws WBXCONexception{
-final	Document				dom;
-		try{					params.add(new BasicNameValuePair("cred",getDomainCredToken()));
+	final private Document executeNonQueued(final List<NameValuePair> params) throws WBXCONexception{
+		return executeNonQueued(params,0);
+	}
+	
+	final private Document executeNonQueued(final List<NameValuePair> params,final int retry) throws WBXCONexception{
+		Document				dom			=	null;
+		try{					cleanCred(params);
 final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
 								factory.setValidating(false);
 								factory.setCoalescing(true);
@@ -361,12 +373,20 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 			try{				dom			=	db.parse(httpRes.getEntity().getContent());
 			}finally{			httpRes.close();
 			}
+		} catch (SocketException se){
+			if (retry<3){//Catches issues with WebEx Connect server connection
+				System.err.println("SocketException making wapi call. Retry:"+(retry+1));
+				return executeNonQueued(params, retry+1);
+			}else
+				throw new WBXCONexception(se);
 		} catch (Exception e){
 			throw new WBXCONexception(e);
 		}
+		if (dom!=null){
 final	NodeList				result		=	dom.getElementsByTagName("result");
-		if (result==null || result.item(0)==null || !result.item(0).getTextContent().equalsIgnoreCase("success"))
-			throw new WBXCONexception(getMethodName(2)+": [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
+			if (result==null || result.item(0)==null || !result.item(0).getTextContent().equalsIgnoreCase("success"))
+				throw new WBXCONexception(getMethodName(2)+": [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
+		}
 		return dom;
 	}
 
@@ -379,22 +399,52 @@ final	NodeList				result		=	dom.getElementsByTagName("result");
 	 * @return Document xml output from the REST API call
 	 * @throws WBXCONexception
 	 */
-	final private Document executeQueued(List<NameValuePair> params) throws WBXCONexception{
-final	Document				dom;
-		try{					params.add(new BasicNameValuePair("cred",getDomainCredToken()));
-final	HttpPost 				httpPost	=	new HttpPost(this.wapiURL);
-								httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
-final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());	
-			try{				dom			=	THREADPOOL.submit(new WAPIworker(httpPost)).get();
-			}finally{			httpRes.close();
-			}
+	final private Document executeQueued(final List<NameValuePair> params) throws WBXCONexception{
+		return executeQueued(params,0);
+	}
+	
+	final private Document executeQueued(final List<NameValuePair> params,final int retry) throws WBXCONexception{
+		try{
+			return THREADPOOL.submit(new Callable<Document>(){
+				@Override
+				public Document call() throws WBXCONexception {
+					return getDoc(0);
+				}
+				
+				private Document getDoc(final int retry) throws WBXCONexception{
+			Document				dom			=	null;
+					try{			cleanCred(params);
+	final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
+									factory.setValidating(false);
+									factory.setCoalescing(true);
+	final	DocumentBuilder			db			=	factory.newDocumentBuilder();		
+	final	HttpPost 				httpPost	=	new HttpPost(wapiURL);
+									httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
+	final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());	
+						try{		dom			=	db.parse(httpRes.getEntity().getContent());
+						}finally{	httpRes.close();
+						}
+					} catch (SocketException se){
+						if (retry<3){//Catches issues with WebEx Connect server connection
+							System.err.println("SocketException making wapi call. Retry:"+(retry+1));
+							return getDoc(retry+1);
+						}else
+							throw new WBXCONexception(se);
+					} catch (Exception e){
+						throw new WBXCONexception(e);
+					}
+					if (dom!=null){
+	final	NodeList				result		=	dom.getElementsByTagName("result");
+						if (result==null || result.item(0)==null || !result.item(0).getTextContent().equalsIgnoreCase("success"))
+							throw new WBXCONexception(getMethodName(2)+": [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
+					}
+					return dom;
+				}
+			}).get();
+
 		} catch (Exception e){
 			throw new WBXCONexception(e);
 		}
-final	NodeList				result		=	dom.getElementsByTagName("result");
-		if (result==null || result.item(0)==null || !result.item(0).getTextContent().equalsIgnoreCase("success"))
-			throw new WBXCONexception(getMethodName(2)+": [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
-		return dom;
 	}
 
 	private final static String getMethodName() {
@@ -821,54 +871,24 @@ final	Transformer	transformer	=	TransformerFactory.newInstance().newTransformer(
 					transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 					transformer.transform(new DOMSource(doc), new StreamResult(out));
 	}
-	
-	/**
-	 * This private class acts as a worker thread for making the actual call to the WBX REST APIs
-	 * This is implemented via a static <code>FixedThreadPool</code> {@link java.util.concurrent.ExecutorService} such that no more than <code>MAX_HTTP_REQUESTS</code>
-	 * of requests are active at any given time, thus preventing DoS attack thread blocking.
+	/*
+	 * Trims any whitespace from beginning or end, as well as removes any quotes from begining or end
+	 * @param stringToTrim
+	 * @return
 	 */
-	private final class WAPIworker implements Callable<Document>{
-final	private	HttpUriRequest 	request;
-final	private	HttpContext		context;
-	
-		/**
-		 * This private class acts as a worker thread for making the actual call to the WBX REST APIs
-		 * This is implemented via a static <code>FixedThreadPool</code> {@link java.util.concurrent.ExecutorService} such that no more than <code>MAX_HTTP_REQUESTS</code>
-		 * of requests are active at any given time, thus preventing DoS attack thread blocking.
-		 */
-		WAPIworker(final HttpUriRequest request){
-			this.request	=	request;
-			this.context	=	new BasicHttpContext();
-		}
-	
-		/* (non-Javadoc)
-		 * @see java.util.concurrent.Callable#call()
-		 */
-		@Override
-		public Document call() throws WBXCONexception {
-Document						doc			=	null;
-			try{
-final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
-								factory.setValidating(false);
-								factory.setCoalescing(true);
-final	DocumentBuilder			db			=	factory.newDocumentBuilder();
-final	CloseableHttpResponse 	httpRes 	=	HTTPSCLIENT.execute(this.request,this.context);
-				try{			doc			=	db.parse(httpRes.getEntity().getContent());
-				}finally{		httpRes.close();
-				}
-			} catch (Exception s){
-				try {
-final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
-final	DocumentBuilder 		parser 		=	factory.newDocumentBuilder();
-								doc			=	parser.newDocument();
-final	Element					msg			=	doc.createElement("message");
-								msg.appendChild(doc.createTextNode("Exception:"+s+" Message:"+s.getMessage()));
-				} catch (ParserConfigurationException e) {
-					throw new WBXCONexception(e);
-				}
+	final static String trim(String stringToTrim){
+		if (stringToTrim==null)
+			return null;
+		try{
+			stringToTrim		=	stringToTrim.trim();
+			if (stringToTrim.startsWith("\"") && stringToTrim.endsWith("\"")){
+				stringToTrim	=	stringToTrim.substring(1,stringToTrim.length()-1);
 			}
-			return doc;
-		}
+			if (stringToTrim.startsWith("'") && stringToTrim.endsWith("'")){
+				stringToTrim	=	stringToTrim.substring(1,stringToTrim.length()-1);
+			}
+		} catch (Exception e){}
+		return stringToTrim;
 	}
 
 	/**
@@ -1056,7 +1076,7 @@ final	List<NameValuePair>	params 		=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("type","thing"));
 							params.add(new BasicNameValuePair("select","thingID:ext/WBX/status"));
 							params.add(new BasicNameValuePair("id",this.jobID));
-final	Document 			dom			=	executeQueued(params);
+final	Document 			dom			=	executeQueued(params);//documentPrettyPrint(dom,System.out);
 			if (dom.getElementsByTagName("status").item(0).getTextContent().equalsIgnoreCase("completed"))
 				return true;
 			return false;
@@ -1097,10 +1117,13 @@ final	BufferedReader 			in 			=	new BufferedReader(new InputStreamReader(httpRes
 		String					line		=	null;
 					while((line = in.readLine()) != null) {
 final	String[]				parms		=	line.split(",");
-						if (parms[1].equalsIgnoreCase("Activated"))
-								activated.add(parms[0]);
-						else if (parms[1].equalsIgnoreCase("Deactivated"))
-								deactivated.add(parms[0].toLowerCase());
+						if (trim(parms[1]).equalsIgnoreCase("Activated")){
+final	String					id			=	trim(parms[0]).toLowerCase();
+								activated.add(id.substring(0,id.indexOf("@")));
+						}else if (trim(parms[1]).equalsIgnoreCase("Deactivated")){
+final	String					id			=	trim(parms[0]).toLowerCase();
+								deactivated.add(id.substring(0,id.indexOf("@")));
+						}
 					}
 				} finally {		httpRes.close(); }
 			} catch (Exception e){

@@ -227,7 +227,7 @@ final	NamingEnumeration<SearchResult>	results	=	search(context,searchContext,fil
 final	private		ThreadLocal<DateFormat>	dateFormat	=	new ThreadLocal<DateFormat>() {
 																@Override
 																protected DateFormat initialValue() {
-																	return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS");
+																	return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss.SSS");
 																}
 															};
 		@Override

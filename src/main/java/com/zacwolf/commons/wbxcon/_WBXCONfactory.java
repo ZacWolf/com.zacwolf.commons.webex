@@ -84,14 +84,23 @@ final			WBXCONorg		org;
 	public void finalize(){
 		this.org.finalize();
 	}
-	
+
 	/**
-	 * Return the list of all CMCU clusters configured for the domain
-	 * @return list of CMCU cluster names
+	 * Return the set of all CMCU clusters configured for the domain
+	 * @return {@link java.util.Set} of CMCU cluster names
 	 * @throws WBXCONexception
 	 */
 	public Set<String> domainGetCMCUClusterSet() throws WBXCONexception{
 		return this.org.restapiDomainGetCMCUClusterSet();
+	}
+
+	/**
+	 * Return the set of WBX:privlege values
+	 * @return {@link java.util.Set} of WBX:privilege values
+	 * @throws WBXCONexception
+	 */
+	public Set<String> domainGetPrivilegeSet() throws WBXCONexception{
+		return this.org.restapiDomainGetPrivilegeSet();
 	}
 
 	/**

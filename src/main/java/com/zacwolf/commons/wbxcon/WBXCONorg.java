@@ -497,6 +497,23 @@ final	NodeList			clusternameselement	=	dom.getElementsByTagName("CUCMClusterName
 			clusters.add(clusternameselement.item(c).getTextContent());
 		return clusters;
 	}
+	
+	/**
+	 * @return @link java.util.Set} of WBX:privilege values
+	 * @throws WBXCONexception
+	 */
+	final Set<String> restapiDomainGetPrivilegeSet() throws WBXCONexception{
+final	Set<String>			privs				=	new TreeSet<String>();
+final	List<NameValuePair>	params				=	new ArrayList<NameValuePair>();
+							params.add(new BasicNameValuePair("cmd","execute"));
+							params.add(new BasicNameValuePair("task","ProbeAccess"));
+							params.add(new BasicNameValuePair("xml", "<tests><dump-privileges/></tests>"));
+final	Document 			dom					=	executeQueued(params);
+final	NodeList			privileges			=	dom.getElementsByTagName("privilege");
+		for (int c=0;c<privileges.getLength();c++)
+			privs.add(privileges.item(c).getTextContent());
+		return privs;
+	}
 
 	/**
 	 * @return WBX GroupID specified by the groupName

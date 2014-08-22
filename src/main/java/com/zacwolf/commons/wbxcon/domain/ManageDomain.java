@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -30,7 +29,7 @@ import com.zacwolf.commons.wbxcon.exceptions.WBXCONexception;
 
 public abstract class ManageDomain {
 
-final	public		static		String			KEY_level		=	"level";
+final	public		static		String			KEY_wapiDOMAIN	=	"wapiDOMAIN";
 final	public		static		String			KEY_wapiUSER	=	"wapiUSER";
 final	public		static		String			KEY_wapiPASS	=	"wapiPASS";
 final	public		static		String			KEY_wapiAUTHURL	=	"wapiAUTHURL";
@@ -44,19 +43,17 @@ final	protected	transient	_WBXCONfactory			org;
 final	protected	transient	LDAPserverConnection	ldap;
 
 
-	public ManageDomain(final Level level, 
-						final String domain, 
+	public ManageDomain(final String domain, 
 						final String wapiUSER, 
 						final String wapiPASS,
 						final String ldapURL,
 						final String ldapUSER,
 						final String ldapPASS
 					) throws WBXCONexception{
-		this(level,domain,null,wapiUSER,wapiPASS,ldapURL,ldapUSER,ldapPASS);
+		this(domain,null,wapiUSER,wapiPASS,ldapURL,ldapUSER,ldapPASS);
 	}
 
-	public ManageDomain(final Level level, 
-						final String domain, 
+	public ManageDomain(final String domain, 
 						final String wapiAUTHURL, 
 						final String wapiUSER, 
 						final String wapiPASS,
@@ -66,12 +63,10 @@ final	protected	transient	LDAPserverConnection	ldap;
 					) throws WBXCONexception{
 					this.DOMAIN			=	domain;
 					this.LOGGER			=	Logger.getLogger(DOMAIN);
-					this.LOGGER.setLevel(level);
 					this.LOGGER.setUseParentHandlers(false);
 final	Handler		defaultHandler		=	new ConsoleHandler();
 final	Formatter	defaultFormatter	=	new DomainLoggingFormatter();
 					defaultHandler.setFormatter(defaultFormatter);
-					defaultHandler.setLevel(level);
 					this.LOGGER.addHandler(defaultHandler);
 					this.org			=	new _WBXCONfactory(DOMAIN,wapiAUTHURL, wapiUSER, wapiPASS);
 		if (ldapURL!=null)

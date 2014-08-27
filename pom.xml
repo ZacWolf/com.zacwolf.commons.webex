@@ -20,8 +20,6 @@
 	</licenses>
 	<scm>
 		<url>https://github.com/ZacWolf/com.zacwolf.commmons.webex</url>
-		<connection>scm:git:git://github.com/ZacWolf/com.zacwolf.commons.webex.git</connection>
-		<developerConnection>scm:git:git@github.com:ZacWof/com.zacwolf.commons.webex.git</developerConnection>
 	</scm>
 	<developers>
 		<developer>
@@ -123,4 +121,8 @@
 			<version>2.4</version>
 		</dependency>
 	</dependencies>
+	<organization>
+		<name>ZacWolf</name>
+		<url>http://zacwolf.com</url>
+	</organization>
 </project>

@@ -1,9 +1,6 @@
 package com.zacwolf.commons.wbxcon.domain;
 
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -43,8 +40,8 @@ final	protected	transient	_WBXCONfactory			org;
 final	protected	transient	LDAPserverConnection	ldap;
 
 
-	public ManageDomain(final String domain, 
-						final String wapiUSER, 
+	public ManageDomain(final String domain,
+						final String wapiUSER,
 						final String wapiPASS,
 						final String ldapURL,
 						final String ldapUSER,
@@ -53,22 +50,22 @@ final	protected	transient	LDAPserverConnection	ldap;
 		this(domain,null,wapiUSER,wapiPASS,ldapURL,ldapUSER,ldapPASS);
 	}
 
-	public ManageDomain(final String domain, 
-						final String wapiAUTHURL, 
-						final String wapiUSER, 
+	public ManageDomain(final String domain,
+						final String wapiAUTHURL,
+						final String wapiUSER,
 						final String wapiPASS,
 						final String ldapURL,
 						final String ldapUSER,
 						final String ldapPASS
 					) throws WBXCONexception{
 					this.DOMAIN			=	domain;
-					this.LOGGER			=	Logger.getLogger(DOMAIN);
+					this.LOGGER			=	Logger.getLogger(this.DOMAIN);
 					this.LOGGER.setUseParentHandlers(false);
 final	Handler		defaultHandler		=	new ConsoleHandler();
 final	Formatter	defaultFormatter	=	new DomainLoggingFormatter();
 					defaultHandler.setFormatter(defaultFormatter);
 					this.LOGGER.addHandler(defaultHandler);
-					this.org			=	new _WBXCONfactory(DOMAIN,wapiAUTHURL, wapiUSER, wapiPASS);
+					this.org			=	new _WBXCONfactory(this.DOMAIN,wapiAUTHURL, wapiUSER, wapiPASS);
 		if (ldapURL!=null)
 					this.ldap			=	new LDAPserverConnection(ldapURL,ldapUSER,ldapPASS);
 		else		this.ldap			=	null;
@@ -76,42 +73,6 @@ final	Formatter	defaultFormatter	=	new DomainLoggingFormatter();
 
 	public abstract void manageUsers() throws WBXCONexception;
 	
-	/**
-	 * @param url
-	 * @param user
-	 * @param pass
-	 * @return
-	 * @throws SQLException
-	 * @throws NotInitializedException
-	 */
-	protected static final Connection getDBconnection(final String url, final String user, final String password) throws SQLException{
-		return getDBconnection(url,user,password,0);
-	}
-
-	/**
-	 * @param url
-	 * @param user
-	 * @param pass
-	 * @param retry
-	 * @return
-	 * @throws SQLException
-	 * @throws NotInitializedException
-	 */
-	private static final Connection getDBconnection(final String url, final String user, final String password,int retry) throws SQLException{
-		try{
-			return DriverManager.getConnection(url,user,password);
-		} catch (SQLException sql){
-			if (sql.getErrorCode()==12154 && retry<10){
-				try {
-					Thread.sleep(10000);
-					getDBconnection(url,user,password,++retry);
-				} catch (InterruptedException e) {}
-			} else 
-				throw sql;
-		}
-		return null;
-	}
-
 	/**
 	 * Convenience class for connecting to an LDAP server, and doing a search
 	 *
@@ -142,7 +103,7 @@ final	private	Hashtable<String,String>	environment		=	new Hashtable<String,Strin
 		 */
 		public InitialDirContext getNewContext() throws NamingException{
 			try {	return new InitialDirContext(this.environment);
-			} catch (NamingException e) {// let's try localhost before we error out
+			} catch (final NamingException e) {// let's try localhost before we error out
 final	Hashtable<String,String>	tempenv	=	new Hashtable<String,String>(this.environment);
 									tempenv.put(Context.PROVIDER_URL, "ldap://localhost:389");
 					return new InitialDirContext(tempenv);
@@ -160,7 +121,7 @@ final	Hashtable<String,String>	tempenv	=	new Hashtable<String,String>(this.envir
 		 * @return				Fully loaded list of search result objects.
 		 * @throws NamingException
 		 */
-		public List<SearchResult> search(final String searchContext, 
+		public List<SearchResult> search(final String searchContext,
 													  final String filter
 													 ) throws NamingException
 		{
@@ -177,8 +138,8 @@ final	Hashtable<String,String>	tempenv	=	new Hashtable<String,String>(this.envir
 		 * @return				Fully loaded list of search result objects.
 		 * @throws NamingException
 		 */
-		public List<SearchResult> search(final String searchContext, 
-													  final String filter, 
+		public List<SearchResult> search(final String searchContext,
+													  final String filter,
 													  final long countLimit
 													 ) throws NamingException
 		{
@@ -202,7 +163,7 @@ final	NamingEnumeration<SearchResult>	results	=	search(context,searchContext,fil
 		 * 
 		 * The default max number of matches returned is 1000
 		 * 
-		 * @param context		{@link InitalDirContext} 
+		 * @param context		{@link InitalDirContext}
 		 * @param searchContext	The fully qualified base to start the search
 		 * 						Usually in the form <code>CN=,OU=,OU=,DC=,DC=</code>
 		 * @param filter		@see <a href="http://docs.oracle.com/cd/E19528-01/819-0997/gdxpd/index.html">Examples</a>
@@ -222,8 +183,8 @@ final	NamingEnumeration<SearchResult>	results	=	search(context,searchContext,fil
 		 * The InitialDirContext is not closed after the search, allowing it
 		 * to be reused for multiple searches.
 		 * 
-		 * @param context		{@link InitalDirContext} 
-		 * @param searchContext	The fully qualified search text. Usually in the form 
+		 * @param context		{@link InitalDirContext}
+		 * @param searchContext	The fully qualified search text. Usually in the form
 		 * 						<code>CN=,OU=,OU=,DC=,DC=</code>
 		 * @param filter		@see <a href="http://docs.oracle.com/cd/E19528-01/819-0997/gdxpd/index.html">Examples</a>
 		 * @param countLimit	The max number of matching records to return
@@ -231,8 +192,8 @@ final	NamingEnumeration<SearchResult>	results	=	search(context,searchContext,fil
 		 * @throws NamingException
 		 */
 		public NamingEnumeration<SearchResult> search(final InitialDirContext context,
-													  final String searchContext, 
-													  final String filter, 
+													  final String searchContext,
+													  final String filter,
 													  final long countLimit
 													 ) throws NamingException
 		{
@@ -248,11 +209,11 @@ final	private		ThreadLocal<DateFormat>	dateFormat	=	new ThreadLocal<DateFormat>(
 																}
 															};
 		@Override
-		final public String format(LogRecord record) {
+		final public String format(final LogRecord record) {
 final		StringBuilder	logEntry	=	new StringBuilder();
-							logEntry.append(DOMAIN);
+							logEntry.append(ManageDomain.this.DOMAIN);
 							logEntry.append(" ");
-							logEntry.append(dateFormat.get().format(new Date(record.getMillis())));
+							logEntry.append(this.dateFormat.get().format(new Date(record.getMillis())));
 							logEntry.append(" ");
 							logEntry.append(record.getLevel().getName());
 							logEntry.append(" ");

@@ -1,4 +1,4 @@
-<project basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+<project default="buildProject" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	<property environment="env"/>
 	<target name="buildProject" description="Builds the individual project">
 		<artifact:pom id="mypom" file="pom.xml" />

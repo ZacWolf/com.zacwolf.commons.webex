@@ -59,7 +59,7 @@ final			WBXCONorg		org;
 			@Override
 			public void run() {
 				try { finalize();
-				} catch (Throwable e) {
+				} catch (final Throwable e) {
 					e.printStackTrace();
 				}
 			}
@@ -73,7 +73,7 @@ final			WBXCONorg		org;
 			@Override
 			public void run() {
 				try { finalize();
-				} catch (Throwable e) {
+				} catch (final Throwable e) {
 					e.printStackTrace();
 				}
 			}
@@ -110,7 +110,7 @@ final			WBXCONorg		org;
 	 * @return	{@link WBXCONuser.WBXCONGROUPID} representation of the groupID
 	 * @throws WBXCONexception
 	 */
-	public WBXCONuser.WBXCONGROUPID groupGetIDforName(String groupname) throws WBXCONexception{
+	public WBXCONuser.WBXCONGROUPID groupGetIDforName(final String groupname) throws WBXCONexception{
 		return this.org.restapiGroupGetIDForName(groupname);
 	}
 	
@@ -142,7 +142,7 @@ final			WBXCONorg		org;
 	 * 
 	 * @param account			a <code>WBXaccount</code> Object to be used to create a matching WBX User account.
 	 * @param password			a String containing the password to be used as the default password for the account.
-	 * 							if the password does not meet the rules for the org, then the account will not be 
+	 * 							if the password does not meet the rules for the org, then the account will not be
 	 * 							created an an error will be thrown.
 	 * @return WBXCONuser.WBXCONUID of the account that is created
 	 * @throws WBXCONexception
@@ -160,7 +160,7 @@ final			WBXCONorg		org;
 	 * @return WBXCONuser.WBXCONUID of the account that is created
 	 * @throws WBXCONexception
 	 */
-	public WBXCONuser.WBXCONUID accountCreate(final WBXCONuser account, String password, final boolean sendWelcomeEmail) throws WBXCONexception {
+	public WBXCONuser.WBXCONUID accountCreate(final WBXCONuser account, final String password, final boolean sendWelcomeEmail) throws WBXCONexception {
 		return this.org.restapiAccountCreate(account,password,sendWelcomeEmail);
 	}
 	
@@ -171,7 +171,7 @@ final			WBXCONorg		org;
 	 * @return WBXCONuser representation of the user account
 	 * @throws WBXCONexception
 	 */
-	public WBXCONuser accountGet(String id) throws WBXCONexception{
+	public WBXCONuser accountGet(final String id) throws WBXCONexception{
 		return this.org.restapiAccountGet(id);
 	}
 
@@ -181,12 +181,12 @@ final			WBXCONorg		org;
 	 * @return
 	 * @throws WBXCONexception
 	 */
-	public Document accountGetAsRawDom(String id) throws WBXCONexception{
+	public Document accountGetAsRawDom(final String id) throws WBXCONexception{
 		return this.org.restapiAccountGetAsDom(id);
 	}
 
 	/**
-	 * Returns an xml string representation of a user object 
+	 * Returns an xml string representation of a user object
 	 * @param id
 	 * @return
 	 * @throws WBXCONexception
@@ -194,8 +194,8 @@ final			WBXCONorg		org;
 	 * @throws IOException
 	 * @throws TransformerException
 	 */
-	public String accountGetAsPretttyPrint(String id) throws WBXCONexception, NullPointerException, IOException, TransformerException{
-final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();	
+	public String accountGetAsPretttyPrint(final String id) throws WBXCONexception, NullPointerException, IOException, TransformerException{
+final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();
 		WBXCONorg.documentPrettyPrint(this.org.restapiAccountGetAsDom(id), baos);
 		return baos.toString("utf-8");
 	}
@@ -208,7 +208,7 @@ final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();
 	}
 
 	/**
-	 * Set the CMCU cluster value for a given user 
+	 * Set the CMCU cluster value for a given user
 	 * @param userName		The userName of the user
 	 * @param clustername	The clustername to set
 	 * @throws WBXCONexception
@@ -300,9 +300,9 @@ final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();
 	 * Synchronizes the WBXCON User profile data with the <code>WBXCONuser</code> object
 	 * @param account		a <code>WBXaccount</code> object
 	 * @throws WBXCONexception
-	 * @throws ParserConfigurationException 
-	 * @throws TransformerException 
-	 * @throws NullPointerException 
+	 * @throws ParserConfigurationException
+	 * @throws TransformerException
+	 * @throws NullPointerException
 	 */
 	public WBXCONuser accountSyncProfile(final WBXCONuser account,final boolean clearFirst) throws WBXCONexception, NullPointerException, TransformerException, ParserConfigurationException{
 		if (clearFirst)
@@ -311,7 +311,7 @@ final	ByteArrayOutputStream	baos	=	new ByteArrayOutputStream();
 final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
 final	DocumentBuilder			parser 		=	factory.newDocumentBuilder();
 final	Document				doc			=	parser.newDocument();
-		this.org.restapiAccountModify(account.getWBXUID(),"<user><ext><WBX>"+WBXCONorg.documentToXMLstring(account.getWBX().getPROFILE().marshallXML(doc))+"</WBX></ext></user>");
+		this.org.restapiAccountModify(account.id,"<ext><WBX>"+WBXCONorg.documentToXMLstring(account.getWBX().getPROFILE().marshallXML(doc))+"</WBX></ext>");
 		return accountGet(account.userName);
 	}
 	
@@ -352,20 +352,20 @@ final	WBXCONorg.REPORTJOB	report	=	this.org.new REPORTJOB(reportType,reportXML);
 	}
 	
 	/**
-	 * Populates two sorted sets with email address for all the currently 
+	 * Populates two sorted sets with email address for all the currently
 	 * activated and deactivated accounts for the domain
 	 * 
 	 * @param activated
 	 * @param deactivated
 	 * @throws WBXCONexception
-	 * @throws IOException 
-	 * @throws InterruptedException 
-	 * @throws ClientProtocolException 
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws ClientProtocolException
 	 */
 	public synchronized void populateAccountUserNameSets(final SortedSet<String> activated, final SortedSet<String> deactivated) throws WBXCONexception{
 		try{
 			this.org.new REPORTJOB("org_connect_user_realtime_report","<bucketSize>total</bucketSize>").populateActivatedDeactivedSets(activated, deactivated);
-		}catch (Exception e){
+		}catch (final Exception e){
 			throw new WBXCONexception(e);
 		}
 	}

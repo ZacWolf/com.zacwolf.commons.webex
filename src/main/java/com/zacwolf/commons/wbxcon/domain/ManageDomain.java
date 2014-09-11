@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
@@ -33,11 +34,13 @@ final	public		static		String			KEY_wapiAUTHURL	=	"wapiAUTHURL";
 final	public		static		String			KEY_ldapURL		=	"ldapURL";
 final	public		static		String			KEY_ldapUSER	=	"ldapUSER";
 final	public		static		String			KEY_ldapPASS	=	"ldapPASS";
+final	public		static		String			KEY_jobProps	=	"jobProps";
 
 final	public		transient	String					DOMAIN;
 final	protected	transient	Logger					LOGGER;
 final	protected	transient	_WBXCONfactory			org;
 final	protected	transient	LDAPserverConnection	ldap;
+final	protected	transient	Properties				props;
 
 
 	public ManageDomain(final String domain,
@@ -45,9 +48,10 @@ final	protected	transient	LDAPserverConnection	ldap;
 						final String wapiPASS,
 						final String ldapURL,
 						final String ldapUSER,
-						final String ldapPASS
+						final String ldapPASS,
+						final Properties jobprops
 					) throws WBXCONexception{
-		this(domain,null,wapiUSER,wapiPASS,ldapURL,ldapUSER,ldapPASS);
+		this(domain,null,wapiUSER,wapiPASS,ldapURL,ldapUSER,ldapPASS,jobprops);
 	}
 
 	public ManageDomain(final String domain,
@@ -56,7 +60,8 @@ final	protected	transient	LDAPserverConnection	ldap;
 						final String wapiPASS,
 						final String ldapURL,
 						final String ldapUSER,
-						final String ldapPASS
+						final String ldapPASS,
+						final Properties jobprops
 					) throws WBXCONexception{
 					this.DOMAIN			=	domain;
 					this.LOGGER			=	Logger.getLogger(this.DOMAIN);
@@ -66,6 +71,7 @@ final	Formatter	defaultFormatter	=	new DomainLoggingFormatter();
 					defaultHandler.setFormatter(defaultFormatter);
 					this.LOGGER.addHandler(defaultHandler);
 					this.org			=	new _WBXCONfactory(this.DOMAIN,wapiAUTHURL, wapiUSER, wapiPASS);
+					this.props			=	jobprops;
 		if (ldapURL!=null)
 					this.ldap			=	new LDAPserverConnection(ldapURL,ldapUSER,ldapPASS);
 		else		this.ldap			=	null;

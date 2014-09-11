@@ -89,7 +89,7 @@ import com.zacwolf.commons.wbxcon.exceptions.WBXCONexception;
  * If the class is ever not able to generate a CRED, this class exits the JVM with error code <code>3</code>
  * </b>
  */
-final class WBXCONorg {	
+final class WBXCONorg {
 
 final		private	static		int						CRED_TIMEOUT		=	100;	// "cred" stays active for two hours but use 100 minutes to be safe
 final		private	static		int						HTTP_TIMEOUT		=	10;		// Don't allow any http request to take longer than 10 minutes
@@ -120,7 +120,7 @@ volatile	private	transient	long					cred_generated		=	0;
 	}
 
 	/**
-	 * Class <code>Contructor</code> initializes WBXCONorg instance for the given managed org (domain) instance. 
+	 * Class <code>Contructor</code> initializes WBXCONorg instance for the given managed org (domain) instance.
 	 * As part of initialization the Constructor makes a call to establish orgID and namespaceID for the domain.
 	 * 
 	 * The REST API calls are made via https GET and POST.  As such, the <code>HTTPSCLIENT</code> needs to be
@@ -148,7 +148,14 @@ volatile	private	transient	long					cred_generated		=	0;
 		try{
 			//Quiet the various apache http client loggers
 			Logger.getLogger("org.apache.http").setLevel(Level.SEVERE);
+			Logger.getLogger("org.apache.http.wire").setLevel(Level.SEVERE);
 			Logger.getLogger("org.apache.http.headers").setLevel(Level.SEVERE);
+			System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+			System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
+			System.setProperty("org.apache.commons.logging.simplelog.log.httpclient.wire", "ERROR");
+			System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http", "ERROR");
+			System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http.headers", "ERROR");
+			
 final	PoolingHttpClientConnectionManager	cm			=	new PoolingHttpClientConnectionManager();
 											cm.setMaxTotal(MAX_HTTP_REQUESTS);
 final	KeyStore							trustStore	=	KeyStore.getInstance("JCEKS");
@@ -176,7 +183,7 @@ final	RequestConfig						config		=	RequestConfig.custom()
 																		.setSSLSocketFactory(sslsf)
 																		.setDefaultRequestConfig(config)
 																		.build();
-		} catch (Exception e){
+		} catch (final Exception e){
 			System.err.println(WBXCONorg.class.getCanonicalName()+" UNABLE TO ESTABLISH HTTPSCLIENT FOR WAPI CALLS. All WAPI CALLS WILL FAIL!!!");
 			e.printStackTrace();
 			System.exit(2);
@@ -185,7 +192,7 @@ final	RequestConfig						config		=	RequestConfig.custom()
 			@Override
 			public void run() {
 				try { finalize();
-				} catch (Throwable e) {
+				} catch (final Throwable e) {
 					e.printStackTrace();
 				}
 			}
@@ -196,7 +203,7 @@ final	RequestConfig						config		=	RequestConfig.custom()
 		this.wapiPASS		=	wapiPASS;
 
 final	Document				dom;
-		try{		
+		try{
 final	DocumentBuilderFactory	factory		=	DocumentBuilderFactory.newInstance();
 								factory.setValidating(false);
 								factory.setCoalescing(true);
@@ -213,7 +220,7 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 			try{				dom			=	db.parse(httpRes.getEntity().getContent());
 			}finally{			httpRes.close();
 			}
-		} catch (Exception e){
+		} catch (final Exception e){
 			throw new WBXCONexception(e);
 		}
 		final	NodeList				result	=	dom.getElementsByTagName("result");
@@ -238,7 +245,7 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 	public final void finalize(){
 		THREADPOOL.shutdownNow();
 		try {	HTTPSCLIENT.close();
-		} catch (IOException e){}
+		} catch (final IOException e){}
 	}
 
 	/**
@@ -247,7 +254,7 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 	 * 
 	 * @param wapiREPORTURL
 	 */
-	final void domainOverrideDefaultReportURL(String wapiREPORTURL){
+	final void domainOverrideDefaultReportURL(final String wapiREPORTURL){
 		if (wapiREPORTURL==null)
 			throw new NullPointerException("wapiREPORTURL may not be null");
 		this.wapiREPORTURL	=	wapiREPORTURL;
@@ -259,7 +266,7 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 	 * 
 	 * @param wapiREPORTURL
 	 */
-	final void domainOverrideDefaultAuthURL(String wapiAUTHURL){
+	final void domainOverrideDefaultAuthURL(final String wapiAUTHURL){
 		if (wapiAUTHURL==null)
 			throw new NullPointerException("wapiAUTHURL may not be null");
 		this.wapiAUTHURL	=	wapiAUTHURL;
@@ -278,7 +285,7 @@ final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHtt
 
 	/**
 	 * Authenticates with the wapiAUTHURL, to pull a token and a server name
-	 * which is then used to populate the wapiURL and generate a cred used 
+	 * which is then used to populate the wapiURL and generate a cred used
 	 * by all subsequent REST calls
 	 * 
 	 * These queries are not added to the WAPIworker thread pool queue
@@ -292,20 +299,20 @@ final	List<NameValuePair>		params		=	new ArrayList<NameValuePair>();
 								params.add(new BasicNameValuePair("username",this.wapiUSER));
 								params.add(new BasicNameValuePair("password",this.wapiPASS));
 								params.add(new BasicNameValuePair("isp","wbx"));
-		try{					
+		try{
 final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
 								factory.setValidating(false);
 								factory.setCoalescing(true);
-final	DocumentBuilder			db			=	factory.newDocumentBuilder();		
+final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 		HttpPost 				httpPost	=	new HttpPost(this.wapiAUTHURL);
 								httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
-		CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());	
+		CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());
 			try{				dom			=	db.parse(httpRes.getEntity().getContent());
 			}finally{			httpRes.close();
 			}
 		NodeList				result		=	dom.getElementsByTagName("result");
 			if (result==null || result.item(0)==null || !result.item(0).getTextContent().equalsIgnoreCase("success"))
-				throw new WBXCONexception(getMethodName(2)+": [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
+				throw new WBXCONexception("restapiDomainGetCredToken("+retry+"): [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
 								this.wapiURL		=	"https://"+dom.getElementsByTagName("serviceurl").item(0).getTextContent()+"/op.do";
 								this.wapiREPORTURL	=	"https://"+dom.getElementsByTagName("serviceurl").item(0).getTextContent()+"/getfile.do";
 								params.clear();
@@ -316,16 +323,16 @@ final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 								params.add(new BasicNameValuePair("token",dom.getElementsByTagName("token").item(0).getTextContent()));
 								httpPost	=	new HttpPost(this.wapiURL);
 								httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
-								httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());	
+								httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());
 			try{				dom			=	db.parse(httpRes.getEntity().getContent());
 			}finally{			httpRes.close();
 			}					result		=	dom.getElementsByTagName("result");
 			if (result==null || result.item(0)==null || !result.item(0).getTextContent().equalsIgnoreCase("success"))
 				throw new WBXCONexception(getMethodName(2)+": [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
 				
-								this.cred			=	dom.getElementsByTagName("cred").item(0).getTextContent();						
+								this.cred			=	dom.getElementsByTagName("cred").item(0).getTextContent();
 								this.cred_generated	=	System.currentTimeMillis();
-		} catch (Exception e){
+		} catch (final Exception e){
 			if (retry<3){
 				//Retry generating a new cred three times before giving up
 				restapiDomainGetCredToken(retry+1);
@@ -339,7 +346,7 @@ final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 	}
 
 	final private void cleanCred(final List<NameValuePair> params) throws WBXCONexception{
-		for (NameValuePair pair:params){
+		for (final NameValuePair pair:params){
 			if (pair.getName().equalsIgnoreCase("cred"))
 				params.remove(pair);
 		}
@@ -364,20 +371,20 @@ final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
 								factory.setValidating(false);
 								factory.setCoalescing(true);
-final	DocumentBuilder			db			=	factory.newDocumentBuilder();		
+final	DocumentBuilder			db			=	factory.newDocumentBuilder();
 final	HttpPost 				httpPost	=	new HttpPost(this.wapiURL);
 								httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
-final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());	
+final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());
 			try{				dom			=	db.parse(httpRes.getEntity().getContent());
 			}finally{			httpRes.close();
 			}
-		} catch (SocketException se){
+		} catch (final SocketException se){
 			if (retry<3){//Catches issues with WebEx Connect server connection
 				System.err.println("SocketException making wapi call. Retry:"+(retry+1));
 				return executeNonQueued(params, retry+1);
 			}else
 				throw new WBXCONexception(se);
-		} catch (Exception e){
+		} catch (final Exception e){
 			throw new WBXCONexception(e);
 		}
 		if (dom!=null){
@@ -415,45 +422,52 @@ final	NodeList				result		=	dom.getElementsByTagName("result");
 	final	DocumentBuilderFactory	factory 	=	DocumentBuilderFactory.newInstance();
 									factory.setValidating(false);
 									factory.setCoalescing(true);
-	final	DocumentBuilder			db			=	factory.newDocumentBuilder();		
-	final	HttpPost 				httpPost	=	new HttpPost(wapiURL);
+	final	DocumentBuilder			db			=	factory.newDocumentBuilder();
+	final	HttpPost 				httpPost	=	new HttpPost(WBXCONorg.this.wapiURL);
 									httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
-	final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());	
+	final	CloseableHttpResponse	httpRes		=	HTTPSCLIENT.execute(httpPost,new BasicHttpContext());
 						try{		dom			=	db.parse(httpRes.getEntity().getContent());
 						}finally{	httpRes.close();
 						}
-					} catch (SocketException se){
+					} catch (final SocketException se){
 						if (retry<3){//Catches issues with WebEx Connect server connection
 							System.err.println("SocketException making wapi call. Retry:"+(retry+1));
 							return getDoc(retry+1);
 						}else
 							throw new WBXCONexception(se);
-					} catch (Exception e){
+					} catch (final Exception e){
 						throw new WBXCONexception(e);
 					}
 					if (dom!=null){
 	final	NodeList				result		=	dom.getElementsByTagName("result");
 						if (result==null || result.item(0)==null || !result.item(0).getTextContent().equalsIgnoreCase("success"))
-							throw new WBXCONexception(getMethodName(2)+": [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
+							throw new WBXCONexception("executeQueued("+getParamsAsString(params)+").getDoc(): [RESULT]:"+result.item(0).getTextContent()+" [ERROR}:"+documentGetErrorString(dom));
 					}
 					return dom;
 				}
 			}).get();
 
-		} catch (Exception e){
+		} catch (final Exception e){
 			throw new WBXCONexception(e);
 		}
 	}
 
 	private final static String getMethodName() {
-		return getMethodName(1);
+		return getMethodName(2);
 	}
 
-	private final static String getMethodName(int level) {
+	private final static String getMethodName(final int level) {
 final	StackTraceElement element	=	Thread.currentThread().getStackTrace()[level];
 		return element.getClassName()+"."+element.getMethodName();
 	}
 
+	private final static String getParamsAsString(final List<NameValuePair> params){
+final	StringBuilder	p	=	new StringBuilder();
+		for (final NameValuePair param:params)
+			p.append("&"+param.getName()+"="+param.getValue());
+			
+		return p.toString();
+	}
 
 /*
  * Here is a list of parameters that are required/supported by each command [cmd=] in a REST call
@@ -579,7 +593,7 @@ final	Element				isSendCPIPMail	=	doc.createElement("isSendCPIPMail");
 							params.add(new BasicNameValuePair("cmd","execute"));
 							params.add(new BasicNameValuePair("task","ProvisionUserComplete"));
 							params.add(new BasicNameValuePair("xml",documentToXMLstring(user)));
-		} catch (Exception e){
+		} catch (final Exception e){
 			throw new WBXCONexception(e);
 		}
 		return new WBXCONuser.WBXCONUID(documentGetTextContentByTagName(executeQueued(params),"userID"));
@@ -596,7 +610,6 @@ final	Element				isSendCPIPMail	=	doc.createElement("isSendCPIPMail");
 final	List<NameValuePair>	params		=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("cmd","delete"));
 							params.add(new BasicNameValuePair("type","user"));
-							params.add(new BasicNameValuePair("select","*"));
 		if (id instanceof WBXCONuser.WBXCONUID)
 							params.add(new BasicNameValuePair("id",((WBXCONuser.WBXCONUID)id).toString()));
 		else				params.add(new BasicNameValuePair("where", "<eq><path>/user/userName</path><value>"+
@@ -674,13 +687,13 @@ final	List<NameValuePair>	params		=	new ArrayList<NameValuePair>();
 	}
 
 	/**
-	 * Makes the REST API call to grant a Special Privilege 
+	 * Makes the REST API call to grant a Special Privilege
 	 * @param id The userName or the {@link WBXCONuser.WBXCONUID} of the account to be granted the special privilege
 	 * @param specialPrivilege The <code>WBX:</code> special privilege name
 	 * @param op The operation: <code>add</code> or <code>remove</code>
 	 * @throws WBXCONexception
 	 */
-	final void restapiAccountAssertSpecialPrivilege(Object id,String specialPrivilege,final String op) throws WBXCONexception{
+	final void restapiAccountAssertSpecialPrivilege(final Object id,final String specialPrivilege,final String op) throws WBXCONexception{
 		if (!op.equals("add") && !op.equals("remove"))
 			throw new WBXCONexception("Not a valid op value.  Must be: add or remove");
 final	WBXCONuser.WBXCONUID	realid;
@@ -767,7 +780,7 @@ final	String					groupID		=	dom.getElementsByTagName("containerID").item(c).getT
 	/**
 	 * Executes a <code>cmd=get&type=user</code> query.<br />
 	 * <br /><b>
-	 * This is depreciated because these queries are <i>blocking</i>, 
+	 * This is depreciated because these queries are <i>blocking</i>,
 	 * consuming a listener thread for the duration of the query.
 	 * </b>
 	 * @param select
@@ -796,7 +809,7 @@ final	String	cred	=	getDomainCredToken();
 
 	/**
 	 * Parses out any WebEx Connect error message(s) from the REST API call results
-	 *  
+	 * 
 	 * @param dom	{@link org.w3c.dom.Document} to parse for any WebEx Connect "wapi" errors
 	 * @return any error message found
 	 */
@@ -812,7 +825,7 @@ final	String			message		=	nodes.item(0).getTextContent();
 			else
 				for (int m=0;m<nodes.getLength();m++)
 						error.append(nodes.item(m).getTextContent()+"\n");
-		} catch (Exception e){
+		} catch (final Exception e){
 						error.append(getMethodName()+"(Document)::No valid error message was returned from WebEx. [ERROR]:"+e+" [MSG]:"+e.getMessage());
 		}
 		return error.toString();
@@ -835,16 +848,16 @@ final	Text		nodeVal	=	dom.createTextNode(value);
 	}
 
 	/**
-	 * This is a helper method that returns the text content from the first node with 
-	 * the specified tag name 
+	 * This is a helper method that returns the text content from the first node with
+	 * the specified tag name
 	 * @param {@link org.w3c.dom.Document} to parse
 	 * @param tagname
 	 * @return text content for the specified tag or null if no text content
 	 */
-	final static String documentGetTextContentByTagName(Document dom, String tagname){
+	final static String documentGetTextContentByTagName(final Document dom, final String tagname){
 		try{
 			return dom.getElementsByTagName(tagname).item(0).getTextContent();
-		} catch (NullPointerException npe){
+		} catch (final NullPointerException npe){
 			return null;
 		}
 	}
@@ -902,7 +915,7 @@ final	Transformer	transformer	=	TransformerFactory.newInstance().newTransformer(
 			if (stringToTrim.startsWith("'") && stringToTrim.endsWith("'")){
 				stringToTrim	=	stringToTrim.substring(1,stringToTrim.length()-1);
 			}
-		} catch (Exception e){}
+		} catch (final Exception e){}
 		return stringToTrim;
 	}
 
@@ -933,7 +946,7 @@ final	Transformer	transformer	=	TransformerFactory.newInstance().newTransformer(
 			this.maxLength			=	15;
 			this.minLCaseCount		=	minimumAlpha;
 			//typical WebEx double speak, if requiredMixedCase it means to require at least one upper case alphabetic character
-			this.minUCaseCount		=	requireMixedCase?1:0; 
+			this.minUCaseCount		=	requireMixedCase?1:0;
 			this.minNumCount		=	minNumeric;
 			this.minSpecialCount	=	minSpecial;
 		}
@@ -942,12 +955,12 @@ final	Transformer	transformer	=	TransformerFactory.newInstance().newTransformer(
 		 * @return	a random password that matches the rules for the org
 		 */
 		String getRandomPassword(){
-			return PasswordUtils.generateRandom(minLength, maxLength, minLCaseCount, minUCaseCount, minNumCount, minSpecialCount);
+			return PasswordUtils.generateRandom(this.minLength, this.maxLength, this.minLCaseCount, this.minUCaseCount, this.minNumCount, this.minSpecialCount);
 		}
 	}
 
 	/**
-	 * Running a WebEx report requires that the account used to initialize WBXCONorg 
+	 * Running a WebEx report requires that the account used to initialize WBXCONorg
 	 * have the special privilege: WBX:RunOrgReport
 	 *
 	 */
@@ -974,20 +987,20 @@ final	Transformer	transformer	=	TransformerFactory.newInstance().newTransformer(
 		 * 
 		 * @param reporttype		The various WebEx Connect report types
 		 * @param reportparamsxml	xml that would normally fall between the &lt;params&gt; tag.
-		 * @param forcenew			Forces a new report to be generated, otherwise if false the last 
-		 * 							report with matching <code>reporttype</code> submitted in the same 
+		 * @param forcenew			Forces a new report to be generated, otherwise if false the last
+		 * 							report with matching <code>reporttype</code> submitted in the same
 		 * 							calendar day is retrieved instead.
 		 * @throws WBXCONexception
 		 */
 		public REPORTJOB(final String reporttype, final String reportparamsxml, final boolean forcenew) throws WBXCONexception{
 final	String				jobid		=	forcenew?null:restapiGetJobID(reporttype);
 			if (jobid==null){
-final	List<NameValuePair> params		=	new ArrayList<NameValuePair>();		
+final	List<NameValuePair> params		=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("cmd","execute"));
 							params.add(new BasicNameValuePair("task","Report"));
 							params.add(new BasicNameValuePair("xml","<report><name>"+reporttype+"</name><type>"+reporttype+"</type><params>"+reportparamsxml+"<noSendingEmail>true</noSendingEmail></params></report>"));
 				try{		executeQueued(params);
-				} catch (WBXCONexception e){
+				} catch (final WBXCONexception e){
 					if (!e.getMessage().contains("wapi.concurrent_job_error"))
 						throw e;
 				}
@@ -1004,19 +1017,19 @@ final	List<NameValuePair> params		=	new ArrayList<NameValuePair>();
 		 * 
 		 * @param reporttype		The various WebEx Connect report types
 		 * @param reportparamsxml	xml that would normally fall between the &lt;params&gt; tag.
-		 * @param forcenew			If false the last report with matching <code>reporttype</code> submitted 
+		 * @param forcenew			If false the last report with matching <code>reporttype</code> submitted
 		 * 							in the same calendar day is retrieved instead of generating a new report.
 		 * @throws WBXCONexception
 		 */
 		public REPORTJOB(final String reporttype, final String reportparamsxml, final boolean forcenew, final File outputfile) throws WBXCONexception{
 final	String				jobid		=	forcenew?null:restapiGetJobID(reporttype);
 			if (jobid==null){
-final	List<NameValuePair> params		=	new ArrayList<NameValuePair>();		
+final	List<NameValuePair> params		=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("cmd","execute"));
 							params.add(new BasicNameValuePair("task","Report"));
 							params.add(new BasicNameValuePair("xml","<report><name>"+reporttype+"</name><type>"+reporttype+"</type><params>"+reportparamsxml+"<noSendingEmail>true</noSendingEmail></params></report>"));
 				try{		executeQueued(params);
-				} catch (WBXCONexception e){
+				} catch (final WBXCONexception e){
 					if (!e.getMessage().contains("wapi.concurrent_job_error"))
 						throw e;
 				}
@@ -1060,7 +1073,7 @@ final	List<NameValuePair> params		=	new ArrayList<NameValuePair>();
 		
 		private final String restapiGetJobID(final String reporttype) throws WBXCONexception{
 			try{
-final	List<NameValuePair>	params 		=	new ArrayList<NameValuePair>();			
+final	List<NameValuePair>	params 		=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("cmd","get"));
 							params.add(new BasicNameValuePair("type","thing"));
 							params.add(new BasicNameValuePair("select","thingID:ext/WBX/jobID:ext/WBX/jobType:ext/WBX/jobName:ext/WBX/jobSubmissionTime_D:ext/WBX/status"));
@@ -1072,7 +1085,7 @@ final	List<NameValuePair>	params 		=	new ArrayList<NameValuePair>();
 																				"</and>"+
 																				"<eq><path>/thing/ext/WBX/jobType</path><value>report</value></eq>"+
 																			"</and>"+
-																			"<eq><path>/thing/ext/WBX/RunAsuserId</path><value>"+wapiUser.getWBXUID()+"</value></eq>"+
+																			"<eq><path>/thing/ext/WBX/RunAsuserId</path><value>"+WBXCONorg.this.wapiUser.getWBXUID()+"</value></eq>"+
 																		"</and>"+
 																		"<ge><path>/thing/ext/WBX/params/jobRunDate</path><value>"+new SimpleDateFormat("yyyy-MM-dd").format(new Date())+"</value></ge>"+
 																	  "</and>"
@@ -1080,7 +1093,7 @@ final	List<NameValuePair>	params 		=	new ArrayList<NameValuePair>();
 							params.add(new BasicNameValuePair("order","/thing/ext/WBX/jobSubmissionTime_D,DESC"));
 final	Document			dom			=	executeQueued(params);//documentPrettyPrint(dom,System.out);params.clear();
 				return dom.getElementsByTagName("jobID").item(0).getTextContent();
-			} catch (Exception e){
+			} catch (final Exception e){
 			}
 			return null;
 		}
@@ -1097,21 +1110,21 @@ final	Document 			dom			=	executeQueued(params);//documentPrettyPrint(dom,System
 			return false;
 		}
 		
-		private final synchronized InputStream restapiOutputReport(OutputStream out) throws WBXCONexception{ 
-		InputStream 			ins			=	null;
+		private final synchronized InputStream restapiOutputReport(final OutputStream out) throws WBXCONexception{
+		final InputStream 			ins			=	null;
 			try{
 final	List<NameValuePair>		params 		=	new ArrayList<NameValuePair>();
 								params.add(new BasicNameValuePair("cmd","execute"));
 								params.add(new BasicNameValuePair("task","Job"));
 								params.add(new BasicNameValuePair("xml","<job><jobID>"+this.jobID+"</jobID><jobType>Report</jobType><action>getfile</action><fileType>outputFile</fileType></job>"));
 								params.add(new BasicNameValuePair("cred",getDomainCredToken()));
-final	HttpPost 				httpPost	=	new HttpPost(wapiREPORTURL);
+final	HttpPost 				httpPost	=	new HttpPost(WBXCONorg.this.wapiREPORTURL);
 								httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
 final	CloseableHttpResponse 	httpRes 	=	HTTPSCLIENT.execute(httpPost);
 				try{			IOUtils.copy(httpRes.getEntity().getContent(), out);
 				} finally {		httpRes.close();
 				}
-			} catch (Exception e){
+			} catch (final Exception e){
 				throw new WBXCONexception(e);
 			}
 			return ins;
@@ -1124,7 +1137,7 @@ final	List<NameValuePair>		params 		=	new ArrayList<NameValuePair>();
 								params.add(new BasicNameValuePair("task","Job"));
 								params.add(new BasicNameValuePair("xml","<job><jobID>"+this.jobID+"</jobID><jobType>Report</jobType><action>getfile</action><fileType>outputFile</fileType></job>"));
 								params.add(new BasicNameValuePair("cred",getDomainCredToken()));
-final	HttpPost 				httpPost	=	new HttpPost(wapiREPORTURL);
+final	HttpPost 				httpPost	=	new HttpPost(WBXCONorg.this.wapiREPORTURL);
 								httpPost.setEntity(new UrlEncodedFormEntity(params, org.apache.http.Consts.UTF_8));
 final	CloseableHttpResponse 	httpRes 	=	HTTPSCLIENT.execute(httpPost);
 				try{
@@ -1141,7 +1154,7 @@ final	String					id			=	trim(parms[0]).toLowerCase();
 						}
 					}
 				} finally {		httpRes.close(); }
-			} catch (Exception e){
+			} catch (final Exception e){
 				throw new WBXCONexception(e);
 			}
 		}
@@ -1152,13 +1165,13 @@ final private static class MyThreadFactory implements ThreadFactory {
 final	String		name;
 final	ThreadGroup	group;
 
-		MyThreadFactory(String name){
+		MyThreadFactory(final String name){
 			this.name	=	name;
 			this.group	=	new ThreadGroup(name);
 		}
 		
 		@Override
-		public Thread newThread(Runnable r) {
+		public Thread newThread(final Runnable r) {
 final Thread	t = new Thread(this.group,r);
 				t.setName(this.name + t.getName());
 //				t.setDaemon(true);

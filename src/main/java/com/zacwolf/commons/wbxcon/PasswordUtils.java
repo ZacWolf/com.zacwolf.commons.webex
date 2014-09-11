@@ -36,13 +36,13 @@ public class PasswordUtils {
 final	public	static		String		LCaseChars		=	"abcdefgijkmnopqrstwxyz";
 final	public	static		String		UCaseChars		=	"ABCDEFGHJKLMNPQRSTWXYZ";
 final	public	static		String		NumericChars	=	"0123456789";
-final	public	static		String		SpecialChars	=	"!\"#$%&'()*+,-./:;<=>?@[]^_`{|}~";
+final	public	static		String		SpecialChars	=	"\"'%!#$()*+,-./:;=?@[]^_`{|}~";// removed & < > for xml encoding
 final	private	static		int			lcase			=	0;
 final	private	static		int			ucase			=	1;
 final	private	static		int			num				=	2;
 final	private	static		int			special			=	3;
 
-	public static String generateRandom(int minLength, int maxLength, int minLCaseCount, int minUCaseCount, int minNumCount, int minSpecialCount){
+	public static String generateRandom(final int minLength, final int maxLength, final int minLCaseCount, final int minUCaseCount, final int minNumCount, final int minSpecialCount){
 final	Map<Integer,Integer>	charGroupsUsed			=	new HashMap<Integer,Integer>();
 								charGroupsUsed.put(lcase, minLCaseCount);
 								charGroupsUsed.put(ucase, minUCaseCount);
@@ -59,7 +59,7 @@ final	StringBuilder			selectableChars			=	new StringBuilder();
 			if (requiredCharactersLeft < randomString.length - i) {
 								selectableChars.append(LCaseChars).append(UCaseChars).append(NumericChars).append(SpecialChars);
 			} else {
-				for (Integer k :charGroupsUsed.keySet()) {
+				for (final Integer k :charGroupsUsed.keySet()) {
 					if (charGroupsUsed.get(k)>0)
 						switch (k) {
 							case lcase:
@@ -100,7 +100,7 @@ final	char					nextChar				=	selectableChars.charAt(RandomUtils.nextInt(0, selec
 		return new String(randomString);
 	}
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		try{
 			System.out.println(generateRandom(Integer.parseInt(args[0]),
 											  Integer.parseInt(args[1]),
@@ -110,7 +110,7 @@ final	char					nextChar				=	selectableChars.charAt(RandomUtils.nextInt(0, selec
 											  Integer.parseInt(args[5])
 											)
 							  );
-		} catch (Exception e){
+		} catch (final Exception e){
 			System.err.println("Required Arguments: int minLength, int maxLength, int minLCaseCount, int minUCaseCount, int minNumCount, int minSpecialCount");
 			e.printStackTrace();
 		}

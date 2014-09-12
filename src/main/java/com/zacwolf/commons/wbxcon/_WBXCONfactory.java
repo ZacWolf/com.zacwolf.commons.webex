@@ -122,7 +122,13 @@ final			WBXCONorg		org;
 	 * @throws WBXCONexception
 	 */
 	public WBXCONuser.WBXCONUID accountCreate(final WBXCONuser account) throws WBXCONexception{
-		return accountCreate(account,this.org.passwordrule.getRandomPassword(),true);
+		try{
+			return accountCreate(account,this.org.passwordrule.getRandomPassword(),true);
+		} catch (final WBXCONexception e){
+			if (e.getMessage().contains("The password breaks the org's password security policy"))
+				return accountCreate(account);
+			throw e;
+		}
 	}
 
 	/**
@@ -134,7 +140,13 @@ final			WBXCONorg		org;
 	 * @throws WBXCONexception
 	 */
 	public WBXCONuser.WBXCONUID accountCreate(final WBXCONuser account, final boolean sendWelcomeEmail) throws WBXCONexception {
-		return this.org.restapiAccountCreate(account,this.org.passwordrule.getRandomPassword(),sendWelcomeEmail);
+		try{
+			return accountCreate(account,this.org.passwordrule.getRandomPassword(),sendWelcomeEmail);
+		} catch (final WBXCONexception e){
+			if (e.getMessage().contains("The password breaks the org's password security policy"))
+				return accountCreate(account,sendWelcomeEmail);
+			throw e;
+		}
 	}
 
 	/**
